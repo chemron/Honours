@@ -1,5 +1,4 @@
-*phase_maps*/
+*fits*/
+*png*/
 *.out
 *.script
-test_fits/
-test_png/
