@@ -14,7 +14,7 @@ start_date = datetime(2014, 9, 7)
 end_date = datetime(2020, 8, 3)
 dt = timedelta(hours=12)
 
-folder = "./Phase_maps/"
+folder = "./fits_phase_maps/"
 os.makedirs(folder) if not os.path.exists(folder) else None
 
 
