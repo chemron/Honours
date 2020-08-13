@@ -8,13 +8,19 @@ h = 180
 max = 0.2  # maximum value for magnetograms
 min = -0.2  # minimum value for magnetograms
 
-fits_path = "fits_phase_maps/"
-png_path = "png_phase_maps/"
+fits_path = "DATA/fits_phase_maps/"
+png_path = "DATA/png_phase_maps/"
+error_path = "DATA/error_handling/"
+
+# make folder if it doesn't exist
+os.makedirs(png_path) if not os.path.exists(png_path) else None
+os.makedirs(error_path) if not os.path.exists(error_path) else None
+
 
 
 def save_to_png(name):
     filename = fits_path + name + ".fits"
-    hdul = fits.open(filename, memmap=True, ext=0)
+    hdul = fits.open(filename, memmap=False, ext=0)
     hdul.verify("fix")
 
     image_data = hdul[0].data
@@ -23,8 +29,9 @@ def save_to_png(name):
     image_data = image_data[1:]
 
     # rotate if less than half of the top row is nan
+    rotate=False
     if np.sum(np.isnan(image_data)[0]) < w//2:
-        # rotate = True
+        rotate = True
         image_data = np.rot90(image_data, 2)
 
     # location of nans in data
@@ -55,6 +62,10 @@ def save_to_png(name):
     # combine
     image_data = np.concatenate((split[1], split[0]), axis=1)
 
+    # Rotate back if rotated earlier
+    if rotate:
+        image_data = np.rot90(image_data, 2)
+
     # clip data between (min, max):
     image_data = np.clip(image_data, min, max)
 
@@ -69,18 +80,22 @@ def save_to_png(name):
     image.save(png_path + name + ".png")
 
 
-f1 = open("error_handling/ValueError.txt", 'w')
-f2 = open("error_handling/OSError.txt", 'w')
+f1 = open(f"{error_path}ValueError.txt", 'w')
+f2 = open(f"{error_path}OSError.txt", 'w')
+f3 = open(f"{error_path}IndexError.txt", 'w')
 
 for file in os.listdir(fits_path):
     name = file[:-5]
     try:
-        save_to_png(name)
         print(name)
-    except ValueError:
-        f1.write(name)
-    except OSError:
-        f2.write(name)
+        save_to_png(name)
+    except ValueError as err:
+        f1.write(f"{name}\t{err}\n")
+    except OSError as err:
+        f2.write(f"{name}\t{err}\n")
+    except IndexError as err:
+        f3.write(f"{name}\t{err}\n")
 
 f1.close()
 f2.close()
+f3.close()
