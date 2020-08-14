@@ -17,7 +17,6 @@ os.makedirs(png_path) if not os.path.exists(png_path) else None
 os.makedirs(error_path) if not os.path.exists(error_path) else None
 
 
-
 def save_to_png(name):
     filename = fits_path + name + ".fits"
     hdul = fits.open(filename, memmap=False, ext=0)
@@ -29,7 +28,7 @@ def save_to_png(name):
     image_data = image_data[1:]
 
     # rotate if less than half of the top row is nan
-    rotate=False
+    rotate = False
     if np.sum(np.isnan(image_data)[0]) < w//2:
         rotate = True
         image_data = np.rot90(image_data, 2)
