@@ -1,10 +1,9 @@
-python get_data.py \
+python get_fits.py \
         --STEREO \
         --STEREO_path './DATA/fits_stereo' \
-        --STEREO_start '2010/04/26 00:00:00' \
-        --STEREO_end '2010/04/30 00:00:00' \
-        --STEREO_cadence 100 \
-        --wavelength 304 \
+        --STEREO_start '2010-04-26 00:00:00' \
+        --STEREO_end '2020-08-03 00:00:00' \
+        --wavelength 304
 
         # --AIA \
         # --HMI \

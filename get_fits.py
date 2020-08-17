@@ -5,6 +5,8 @@ import astropy.units as u  # for AIA
 import pickle  # for saving query to file
 import os
 import argparse
+from datetime import datetime
+
 # TODO: do many short queryies rather than one large one
 email = 'csmi0005@student.monash.edu'
 # can make multiple queries and save the details to files based on the AR and
@@ -48,16 +50,12 @@ parser.add_argument("--STEREO_path",
                     default='./FITS_DATA/STEREO'
                     )
 parser.add_argument("--STEREO_start",
-                    help="start time for STEREO",
-                    default='2011/01/01 00:00:00')
+                    help="start time for STEREO (yyyy-mm-dd hh:mm:ss)",
+                    default='2011-01-01 00:00:00')
 parser.add_argument("--STEREO_end",
-                    help="end date for STEREO",
-                    default='2017/01/01 00:00:00')
-parser.add_argument("--STEREO_cadence",
-                    help="download 1 in every n images",
-                    type=int,
-                    default=100
-                    )
+                    help="end date for STEREO (yyyy-mm-dd hh:mm:ss)",
+                    default='2017-01-01 00:00:00')
+
 parser.add_argument("--wavelength",
                     help="wavelength of AIA images in angstroms",
                     type=int,
@@ -80,10 +78,9 @@ STEREO = args.STEREO
 STEREO_path = args.STEREO_path
 cadence = args.cadence*u.hour  # take images every 12 hours
 wavelength = args.wavelength*u.AA  # wavelength in angstroms
-stereo_cadence = args.STEREO_cadence  # use 1 in every n images
 
 # time intervals to avoid missing data
-missing = [AIA_start, AIA_end]
+missing = []
 
 if AIA:
     res_aia = Fido.search(a.Time(AIA_start, AIA_end),
@@ -126,19 +123,58 @@ if HMI:
             time = (str(res_table['T_REC'][i][:-6]) + '00').replace('_', ' ')
             missing.append(time.replace('.', '/'))
 
-if STEREO:
+STEREO_start_date = datetime.fromisoformat(STEREO_start)
+STEREO_end_date = datetime.fromisoformat(STEREO_end)
+os.makedirs(STEREO_path) if not os.path.exists(STEREO_path) else None
+
+while STEREO:
+    print(STEREO_start, STEREO_end)
     res_stereo = Fido.search(a.Wavelength(wavelength),
-                             a.vso.Source('STEREO_B'),
+                             a.vso.Source('STEREO_A'),
                              a.Instrument('EUVI'),
                              a.Time(STEREO_start, STEREO_end),
+                             a.Sample(cadence)
                              )
-    # index of missing data
+
     print(res_stereo)  # [0, 0:-1:100])
+    # put results into qtable
+    table = res_stereo.tables[0]
+    # get time string of final end time of results
+    if len(table) == 0:
+        print("Empty table")
+        STEREO = False
+    else:
+
+        end = table['End Time'][-1][0]
+        # convert to date time:
+        end = datetime.fromisoformat(end)
+
+        # set new stereo start date
+        if end.hour < 6:
+            STEREO_start_date = end.replace(hour=12, minute=0, second=0)
+        elif end.hour < 18:
+            STEREO_start_date = end.replace(day=end.day+1,
+                                            hour=0,
+                                            minute=0,
+                                            second=0)
+        else:
+            STEREO_start_date = end.replace(day=end.day+1,
+                                            hour=12,
+                                            minute=0,
+                                            second=0)
+
+        STEREO_start = STEREO_start_date.strftime("%Y-%m-%d %H:%M:%S")
+        # if we get to the end of results:
+        if STEREO_start_date >= STEREO_end_date:
+            STEREO = False
+
+        downloaded_files = Fido.fetch(res_stereo, path=STEREO_path)
 
 
-# sort dates
-missing.sort()
-print(missing)
+if len(missing) != 0:
+    # sort dates
+    missing.sort()
+    print(missing)
 
 if AIA:
     print('AIA\nStart: ' + AIA_start + '\nEnd: ' + AIA_end)
@@ -167,9 +203,3 @@ if HMI:
                               )
         print(res_hmi)
         downloaded_files = Fido.fetch(res_hmi, path=HMI_path)
-
-if STEREO:
-    print('STEREO\nStart: ' + STEREO_start + '\nEnd: ' + STEREO_end)
-    print(res_stereo[0, 0:-1:100])
-    os.makedirs(STEREO_path) if not os.path.exists(STEREO_path) else None
-    downloaded_files = Fido.fetch(res_stereo[0, 0:-1:100], path=STEREO_path)
