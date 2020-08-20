@@ -4,7 +4,7 @@ import os
 
 
 # combine all stereo data into array: data
-folder = "stereo_pos_data/"
+folder = "DATA/stereo_pos_data/"
 data = np.array([], dtype=float).reshape(0, 7)
 for fname in np.sort(os.listdir(folder)):
     new_data = np.loadtxt(f"{folder}{fname}", dtype=float)
