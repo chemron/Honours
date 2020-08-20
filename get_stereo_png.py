@@ -1,18 +1,14 @@
 #!/usr/bin/env python3
 import os
-import sunpy
-import sunpy.map
+# import sunpy
+# import sunpy.map
 from astropy.io import fits
 import numpy as np
-import astropy.units as u
-from astropy.coordinates import SkyCoord
+# import astropy.units as u
+# from astropy.coordinates import SkyCoord
 from PIL import Image
 import argparse
 
-# note: pixel intensities between 650 and 5000 of SDO roughly correspond to
-# pixel intensities betweeen 0 and 1000 of AIA
-# therefore pixel intensities between 650 and 9350 of SDO roughly correspond to
-# pixel intensities betweeen 0 and 2000 of AIA
 
 # parse the optional arguments:
 parser = argparse.ArgumentParser()
@@ -41,19 +37,19 @@ def save_to_png(name, fits_path, png_path, min, max, w, h):
 
     filename = fits_path + name
     print(filename)
-    map_ref = sunpy.map.Map(filename)
-    top_right = SkyCoord(875 * u.arcsec, 875 * u.arcsec,
-                         frame=map_ref.coordinate_frame)
-    bottom_left = SkyCoord(-875 * u.arcsec, -875 * u.arcsec,
-                           frame=map_ref.coordinate_frame)
+    # map_ref = sunpy.map.Map(filename)
+    # top_right = SkyCoord(1000 * u.arcsec, 1000 * u.arcsec,
+    #                      frame=map_ref.coordinate_frame)
+    # bottom_left = SkyCoord(-1000 * u.arcsec, -1000 * u.arcsec,
+    #                        frame=map_ref.coordinate_frame)
 
     hdul = fits.open(filename, memmap=False, ext=0, ignore_missing_end=True)
     hdul.verify("fix")
     image_data = hdul[0].data
 
     # Cropping to desired range
-    map = sunpy.map.Map(filename)
-    image_data = map.submap(bottom_left, top_right).data
+    # map = sunpy.map.Map(filename)
+    # image_data = map.submap(bottom_left, top_right).data
 
     # clip data
     image_data = np.clip(image_data, min, max)
@@ -92,12 +88,22 @@ fits_path = args.FITS_path
 png_path = args.png_path
 os.makedirs(png_path) if not os.path.exists(png_path) else None
 
+
+error_path = "DATA/error_handling/"
+f1 = open(f"{error_path}stereo_ValueError.txt", 'w')
+
 for filename in os.listdir(fits_path):
-    save_to_png(name=filename,
-                fits_path=fits_path,
-                png_path=png_path,
-                min=min,
-                max=max,
-                w=w,
-                h=h
-                )
+    try:
+        save_to_png(name=filename,
+                    fits_path=fits_path,
+                    png_path=png_path,
+                    min=min,
+                    max=max,
+                    w=w,
+                    h=h
+                    )
+    except ValueError as err:
+        print(f"Error: {filename}")
+        f1.write(f"{filename}\t{err}\n")
+
+f1.close()
