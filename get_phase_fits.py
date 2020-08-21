@@ -9,7 +9,6 @@ main_url = "http://jsoc.stanford.edu/data/farside/Phase_Maps/"
 
 # files are formated as: PHASE_MAP_yyyy.mm.dd_hh:mm:ss.fits
 start_date = datetime(2014, 9, 7)
-# TODO: make this update to current day
 
 end_date = datetime(2020, 8, 3)
 dt = timedelta(hours=12)

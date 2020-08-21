@@ -5,6 +5,11 @@ from datetime import datetime, timedelta
 
 
 # combine all stereo data into array: data
+start_date = datetime(2010, 4, 25)
+
+end_date = datetime(2020, 8, 3)
+
+
 folder = "DATA/stereo_pos_data/"
 data = np.array([], dtype=float).reshape(0, 7)
 for fname in np.sort(os.listdir(folder)):
@@ -38,7 +43,7 @@ angle = np.arctan2(-y, -x)
 period = 27.2753
 
 # time difference between stereo and accoustic map (farside):
-dt = angle * period / 2*np.pi
+dt = angle * period / (2*np.pi)
 # convert to timedelta
 dt = np.array([timedelta(days=d) for d in dt])
 
@@ -47,16 +52,36 @@ dt = np.array([timedelta(days=d) for d in dt])
 # (so that the active regions are in the same position):
 phase_time = stereo_time - dt
 
-# convert to string:
-phase_time = np.array([time.strftime("%y.%m.%d_%H:%M:%S")
-                      for time in phase_time])
-stereo_time = np.array([time.strftime("%y.%m.%d_%H:%M:%S")
-                       for time in stereo_time])
+date = start_date
+dt = timedelta(hours=12)
+# index for moving through phase and stereo time arrays
+i = 0
+
+f = open("DATA/phase_stereo_times.txt", "w")
+while date < end_date:
+    while phase_time[i] < date:
+        i += 1
+    if (phase_time[i] - date) < (date - phase_time[i-1]):
+        j = i
+    else:
+        j = i-1
+    f.write(phase_time[j].strftime("%Y.%m.%d_%H:%M:%S") +
+            " " +
+            stereo_time[j].strftime("%Y.%m.%d_%H:%M:%S") +
+            "\n")
+    date += dt
+
+# # convert to string:
+# phase_time = np.array([time.strftime("%Y.%m.%d_%H:%M:%S")
+#                       for time in phase_time])
+# stereo_time = np.array([time.strftime("%Y.%m.%d_%H:%M:%S")
+#                        for time in stereo_time])
 
 
-phase_stereo_times = np.stack((phase_time, stereo_time), axis=1)
+# phase_stereo_times = np.stack((phase_time, stereo_time), axis=1)
 
-np.savetxt("DATA/phase_stereo_times.txt", phase_stereo_times, fmt='%s')
+# np.savetxt("DATA/phase_stereo_times.txt", phase_stereo_times, fmt='%s')
+
 
 # plot data
 # fig, ax = plt.subplots()
