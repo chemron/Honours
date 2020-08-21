@@ -47,8 +47,16 @@ dt = np.array([timedelta(days=d) for d in dt])
 # (so that the active regions are in the same position):
 phase_time = stereo_time - dt
 
-times = np.array((phase_time, stereo_time)).T
-print(times)
+# convert to string:
+phase_time = np.array([time.strftime("%y.%m.%d_%H:%M:%S")
+                      for time in phase_time])
+stereo_time = np.array([time.strftime("%y.%m.%d_%H:%M:%S")
+                       for time in stereo_time])
+
+
+phase_stereo_times = np.stack((phase_time, stereo_time), axis=1)
+
+np.savetxt("DATA/phase_stereo_times.txt", phase_stereo_times, fmt='%s')
 
 # plot data
 # fig, ax = plt.subplots()
