@@ -1,7 +1,7 @@
 python get_stereo_fits.py \
         --path './DATA/fits_stereo' \
         --start '2010-04-26 00:00:00' \
-        --end '2010-05-01 00:00:00' \
+        --end '2020-05-03 00:00:00' \
         --wavelength 304
 
         # --AIA \

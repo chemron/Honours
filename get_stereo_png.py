@@ -8,6 +8,7 @@ import numpy as np
 # from astropy.coordinates import SkyCoord
 from PIL import Image
 import argparse
+from datetime import datetime, timedelta
 
 
 # parse the optional arguments:
@@ -33,7 +34,7 @@ parser.add_argument("--png_path",
 args = parser.parse_args()
 
 
-def save_to_png(name, fits_path, png_path, min, max, w, h):
+def save_to_png(name, fits_path, png_path, min, max, w, h, i):
 
     filename = fits_path + name
     print(filename)
@@ -75,8 +76,35 @@ def save_to_png(name, fits_path, png_path, min, max, w, h):
     H = name[9:11]
     M = name[11:13]
     S = name[13:15]
-    filename = f"{png_path}STEREO_{y}.{m}.{d}_{H}:{M}:{S}.png"
+
+    s_time = datetime(year=int(y),
+                      month=int(m),
+                      day=int(d),
+                      hour=int(H),
+                      minute=int(M),
+                      second=int(S))
+
+    while stereo_times[i] < s_time:
+        i += 1
+
+    if (stereo_times[i]-s_time) > (s_time - stereo_times[i-1]):
+        phase_time = phase_times[i-1]
+    else:
+        phase_time = phase_times[i]
+        i += 1
+
+    # add an hour if time is before 12
+    if phase_time.hour == 11:
+        phase_time += timedelta(seconds=3600)
+    elif H == 23:
+        phase_time += timedelta(seconds=3600)
+
+    phase_string = phase_time.strftime("%Y.%m.%d_%H:00:00")
+    filename = f"{png_path}STEREO_{y}.{m}.{d}_{H}:{M}:{S}_" \
+               f"{phase_string}.png"
     image.save(filename)
+
+    return i
 
 
 w = h = 1024
@@ -92,16 +120,36 @@ os.makedirs(png_path) if not os.path.exists(png_path) else None
 error_path = "DATA/error_handling/"
 f1 = open(f"{error_path}stereo_ValueError.txt", 'w')
 
+files = np.sort(os.listdir(fits_path))
+
+
+# load phase and stereo time data
+phase_times, stereo_times = np.loadtxt("DATA/phase_stereo_times.txt",
+                                       dtype=str).T
+
+phase_times = np.array([datetime.strptime(time, "%Y.%m.%d_%H:%M:%S")
+                       for time in phase_times
+                        ])
+
+
+stereo_times = np.array([datetime.strptime(time, "%Y.%m.%d_%H:%M:%S")
+                        for time in stereo_times
+                         ])
+
+# index for times
+index = 0
+
 for filename in os.listdir(fits_path):
     try:
-        save_to_png(name=filename,
-                    fits_path=fits_path,
-                    png_path=png_path,
-                    min=min,
-                    max=max,
-                    w=w,
-                    h=h
-                    )
+        index = save_to_png(name=filename,
+                            fits_path=fits_path,
+                            png_path=png_path,
+                            min=min,
+                            max=max,
+                            w=w,
+                            h=h,
+                            i=0
+                            )
     except ValueError as err:
         print(f"Error: {filename}")
         f1.write(f"{filename}\t{err}\n")

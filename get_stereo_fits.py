@@ -18,13 +18,6 @@ email = 'csmi0005@student.monash.edu'
 # retrieve the data later
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--start",
-                    help="start date for AIA and HMI",
-                    default='2011/01/01 00:00:00')
-parser.add_argument("--end",
-                    help="end date for AIA and HMI",
-                    default='2017/01/01 00:00:00')
-
 parser.add_argument("--path",
                     help="directory to store STEREO data",
                     default='./FITS_DATA/STEREO'
@@ -94,7 +87,7 @@ while STEREO:
         # original unified responce object
         UR = res_stereo.get_response(0)
         # blocks (list of the data)
-        lst = UR._data
+        blocks = UR._data
 
         # slice list how I need:
 
@@ -106,16 +99,18 @@ while STEREO:
         # the indexes of the stereo data to download
         indicies = []
         while j < len(times):
-            while times[j] < stereo_times[i]:
+            if times[j] > stereo_times[i]:
+                if (times[j] - stereo_times[i]) < timedelta(hours=2):
+                    indicies += [j]
+                    j += 1
+                i += 1
+            else:
                 j += 1
-            if (times[j] - stereo_times[i]) < timedelta(hours=2):
-                indicies += [j]
-            i += 1
 
-        lst = [lst[k] for k in indicies]
+        blocks = [blocks[k] for k in indicies]
 
         # build responce object
-        q = QueryResponse(lst)
+        q = QueryResponse(blocks)
         # build unified responce object from sliced query responce
         UR = UnifiedResponse(q)
     
