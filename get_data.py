@@ -7,9 +7,13 @@ import astropy.units as u  # for AIA
 import argparse
 import numpy as np
 
+import drms
+import time
+from sunpy.util.parfive_helpers import Downloader
+
 from urllib.error import HTTPError
 
-email = 'csmi0005@student.monash.edu'
+email = 'camerontasmith@gmail.com'
 
 # can make multiple queries and save the details to files based on the AR and
 # retrieve the data later
@@ -59,22 +63,21 @@ def get_data(name: str, series: str, segment: str, start: str, end: str,
              cadence: int, wavelength: int, path: str):
 
     wavelength = wavelength*u.AA
-    # current time of downloading
-
-    c_time = datetime.fromisoformat(start)
+    # start time for downloading
+    s_time = datetime.fromisoformat(start)
     # time of end of downloading
     f_time = datetime.fromisoformat(end)
-    cadence = cadence*u.hour
     # take data from 30 days at a time
     step_time = timedelta(days=30)
     # time of end of this step:
-    e_time = c_time + step_time
-    # time of start of this step
-    s_time = e_time
-
-    path = f"{path}fits_{name}"
+    e_time = s_time + step_time
+    # time between searches
+    cadence = timedelta(hours=cadence)
+    path = f"{path}fits_{name}/"
 
     while True:
+        if e_time > f_time:
+            e_time = f_time
 
         start = s_time.strftime("%Y-%m-%d %H:%M:%S")
         end = e_time.strftime("%Y-%m-%d %H:%M:%S")
@@ -82,7 +85,7 @@ def get_data(name: str, series: str, segment: str, start: str, end: str,
                 a.jsoc.Notify(email),
                 a.jsoc.Series(series),
                 a.jsoc.Segment(segment),
-                a.Sample(1*u.hour)
+                a.Sample(0.3*u.hour)
                 ]
 
         if wavelength != 0:
@@ -90,39 +93,97 @@ def get_data(name: str, series: str, segment: str, start: str, end: str,
 
         res = Fido.search(*args)
 
-        print(res)
-
         # get response object:
         table = res.tables[0]
 
         # get time string of final end time of results
         if len(table) == 0:
-            print(f"{c_time} to {e_time}: Empty table")
-            if e_time >= c_time:
+            print(f"{s_time} to {e_time}: Empty table")
+            if e_time >= f_time:
                 print("finish on empty table")
                 return
             else:
-                s_time = c_time = e_time
+                s_time = e_time
                 e_time += step_time
                 continue
 
-
-        # slice list how I need:
-
         # get times:
-        times = np.array([datetime.fromisoformat(time[0])
-                          for time in table["Start Time"]])
-        # index of table:
-        j = 0
-     # Finally, download the data
-        files = Fido.fetch(UR, path=path)
+        times = np.array([datetime.strptime(time, "%Y-%m-%dT%H:%M:%SZ")
+                          for time in table["T_REC"]])
+
+        index, dates = get_index(times, s_time, e_time, cadence)
+
+        print(index)
+
+        request = get_request(res, index)
+
+        urls = request.urls.url[index]
+
+        downloader = Downloader(progress=True, overwrite=False, max_conn=4)
+
+        for url, date in zip(urls, dates):
+            filename = f"{path}{name}_{date.year}.{date.month:0>2}." \
+                       f"{date.day:0>2}_{date.hour:0>2}:00:00.fits"
+            print(filename)
+            downloader.enqueue_file(url, filename=filename, max_splits=2)
+
+        downloader.download()
 
         # start of next run:
-        if c_time >= f_time:
+        if e_time >= f_time:
             return
 
-        s_time = c_time = e_time
+        s_time = e_time
         e_time += step_time
+
+
+def get_index(times, start: datetime, end: datetime, cadence: timedelta):
+    # get index and dates of every cadence timestep in times
+    index = []
+    dates = []
+    # current time:
+    current = start
+
+    i = 0
+    while i < len(times):
+        # previous time in times
+        p_time = times[i-1]
+        # current time in times
+        time = times[i]
+        if time > current:
+            # if the previous time was closer to current:
+            if (current - p_time) < (time - current):
+                time = p_time
+                i = i - 1
+            # add the time to the index if close enough
+            if (time - current) < timedelta(hours=2):
+                index.append(i)
+                dates.append(time)
+            current += cadence
+        i += 1
+
+    return index, dates
+
+
+def get_request(res, index):
+    # get response
+    jsoc_response = list(res.responses)[0]
+    # get block (info about response)
+    block = jsoc_response.query_args[0]
+    # data string
+    ds = jsoc_response.client._make_recordset(**block)
+    # client for drms
+    cd = drms.Client(email=block.get('notify', ''))
+    request = cd.export(ds, method='url', protocol='fits')
+
+    print("waiting for request", end="")
+    while request.status == 0:
+        print(".", end="")
+        time.sleep(5)
+
+    print("\ndone")
+
+    return request
 
 
 # number of instruments
