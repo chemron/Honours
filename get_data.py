@@ -6,14 +6,16 @@ from datetime import datetime, timedelta
 import astropy.units as u  # for AIA
 import argparse
 import numpy as np
-
+import os
+import requests
+from multiprocessing import Pool, cpu_count
 import drms
 import time
-from sunpy.util.parfive_helpers import Downloader
 
+from requests.exceptions import ConnectionError
 from urllib.error import HTTPError
 
-email = 'camerontasmith@gmail.com'
+email = 'csmi0005@student.monash.edu'
 
 # can make multiple queries and save the details to files based on the AR and
 # retrieve the data later
@@ -67,8 +69,8 @@ def get_data(name: str, series: str, segment: str, start: str, end: str,
     s_time = datetime.fromisoformat(start)
     # time of end of downloading
     f_time = datetime.fromisoformat(end)
-    # take data from 30 days at a time
-    step_time = timedelta(days=30)
+    # take data from 10 days at a time
+    step_time = timedelta(days=20)
     # time of end of this step:
     e_time = s_time + step_time
     # time between searches
@@ -119,15 +121,27 @@ def get_data(name: str, series: str, segment: str, start: str, end: str,
 
         urls = request.urls.url[index]
 
-        downloader = Downloader(progress=True, overwrite=False, max_conn=4)
+        os.makedirs(path) if not os.path.exists(path) else None
+
+        filenames = []
 
         for url, date in zip(urls, dates):
+            if date.hour == 11 or date.hour == 23:
+                date += timedelta(hours=1)
             filename = f"{path}{name}_{date.year}.{date.month:0>2}." \
                        f"{date.day:0>2}_{date.hour:0>2}:00:00.fits"
-            print(filename)
-            downloader.enqueue_file(url, filename=filename, max_splits=2)
+            filenames.append(filename)
 
-        downloader.download()
+        n_cpus = min(cpu_count(), 8)
+        print(f"downloading {len(urls)} files with {n_cpus} cpus.")
+        pool = Pool(n_cpus)
+        args = list(zip(urls, filenames))
+        try:
+            pool.starmap(download_url, args)
+        except ConnectionError as e:
+            print(e)
+        pool.close()
+        pool.join()
 
         # start of next run:
         if e_time >= f_time:
@@ -184,6 +198,18 @@ def get_request(res, index):
     print("\ndone")
 
     return request
+
+
+def download_url(url, filename):
+    print("downloading: ", filename.split("/")[-1])
+    # assumes that the last segment after the / represents the file name
+    # if url is abc/xyz/file.txt, the file name will be file.txt
+    r = requests.get(url, stream=True)
+    if r.status_code == requests.codes.ok:
+        with open(filename, 'wb') as f:
+            for data in r:
+                f.write(data)
+        return
 
 
 # number of instruments

@@ -13,22 +13,22 @@
 #         # --AIA_path './DATA/fits_aia' \
 #         # --HMI_path './DATA/fits_hmi' \
 
-python get_data.py \
-        --instruments 'AIA' \
-        --series 'aia.lev1_euv_12s' \
-        --segment 'image' \
-        --start '2010-06-01 00:00:00' \
-        --end '2010-06-10 00:00:00' \
-        --cadence 12 \
-        --path  './DATA/' \
-        --wavelength 304 \
-
 # python get_data.py \
-#         --instruments 'AIA' 'HMI' \
-#         --series 'aia.lev1_euv_12s' 'hmi.m_45s' \
-#         --segment 'image' 'magnetogram' \
+#         --instruments 'AIA' \
+#         --series 'aia.lev1_euv_12s' \
+#         --segment 'image' \
 #         --start '2010-06-01 00:00:00' \
 #         --end '2010-06-10 00:00:00' \
 #         --cadence 12 \
 #         --path  './DATA/' \
-#         --wavelength 304 0 \
+#         --wavelength 304 \
+
+python get_data.py \
+        --instruments 'AIA' 'HMI' \
+        --series 'aia.lev1_euv_12s' 'hmi.m_45s' \
+        --segment 'image' 'magnetogram' \
+        --start '2012-08-29 00:00:00' \
+        --end '2020-08-03 00:00:00' \
+        --cadence 12 \
+        --path  './DATA/' \
+        --wavelength 304 0 \

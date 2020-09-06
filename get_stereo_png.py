@@ -30,6 +30,11 @@ parser.add_argument("--FITS_path",
 parser.add_argument("--png_path",
                     help="name of folder to be saved in",
                     default="DATA/png_stereo/")
+parser.add_argument("--times_path",
+                    help="path to times document",
+                    default="DATA/phase_stereo_times.txt")
+parser.add_argument("--name",
+                    default="stereo")
 
 args = parser.parse_args()
 
@@ -94,10 +99,8 @@ def save_to_png(name, fits_path, png_path, min, max, w, h, i):
         i += 1
 
     # add an hour if time is before 12
-    if phase_time.hour == 11:
-        phase_time += timedelta(seconds=3600)
-    elif H == 23:
-        phase_time += timedelta(seconds=3600)
+    if phase_time.hour == 11 or phase_time.hour == 23:
+        phase_time += timedelta(hours=1)
 
     phase_string = phase_time.strftime("%Y.%m.%d_%H:00:00")
     filename = f"{png_path}STEREO_{y}.{m}.{d}_{H}:{M}:{S}_" \
@@ -118,13 +121,13 @@ os.makedirs(png_path) if not os.path.exists(png_path) else None
 
 
 error_path = "DATA/error_handling/"
-f1 = open(f"{error_path}stereo_ValueError.txt", 'w')
+f1 = open(f"{error_path}{args.name}_ValueError.txt", 'w')
 
 files = np.sort(os.listdir(fits_path))
 
 
 # load phase and stereo time data
-phase_times, stereo_times = np.loadtxt("DATA/phase_stereo_times.txt",
+phase_times, stereo_times = np.loadtxt(args.times_path,
                                        dtype=str).T
 
 phase_times = np.array([datetime.strptime(time, "%Y.%m.%d_%H:%M:%S")
