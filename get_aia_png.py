@@ -20,7 +20,7 @@ parser.add_argument("--min",
 parser.add_argument("--max",
                     help="upper bound cutoff pixel value for AIA",
                     type=int,
-                    default=150
+                    default=800
                     )
 
 parser.add_argument("--random",
@@ -101,12 +101,12 @@ if __name__ == "__main__":
     # AIA:
     if AIA:
         fits_path = "./DATA/fits_AIA/"
-        png_path = "./DATA/png_aia"
+        png_path = "./DATA/png_aia/"
 
-        os.mkdirs(png_path) if not os.path.exists(png_path) else None
+        os.makedirs(png_path) if not os.path.exists(png_path) else None
 
         for filename in os.listdir(fits_path):
-            map_ref = sunpy.map.Map(filename)
+            map_ref = sunpy.map.Map(f"{fits_path}{filename}")
             top_right = SkyCoord(1000 * u.arcsec, 1000 * u.arcsec,
                                  frame=map_ref.coordinate_frame)
             bottom_left = SkyCoord(-1000 * u.arcsec, -1000 * u.arcsec,

@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 import os
-# import sunpy
-# import sunpy.map
-from astropy.io import fits
+import sunpy
+import sunpy.map
 import numpy as np
-# import astropy.units as u
-# from astropy.coordinates import SkyCoord
+import astropy.units as u
+from astropy.coordinates import SkyCoord
 from PIL import Image
 import argparse
 from datetime import datetime, timedelta
@@ -43,19 +42,23 @@ def save_to_png(name, fits_path, png_path, min, max, w, h, i):
 
     filename = fits_path + name
     print(filename)
-    # map_ref = sunpy.map.Map(filename)
-    # top_right = SkyCoord(1000 * u.arcsec, 1000 * u.arcsec,
-    #                      frame=map_ref.coordinate_frame)
-    # bottom_left = SkyCoord(-1000 * u.arcsec, -1000 * u.arcsec,
-    #                        frame=map_ref.coordinate_frame)
 
-    hdul = fits.open(filename, memmap=False, ext=0, ignore_missing_end=True)
-    hdul.verify("fix")
-    image_data = hdul[0].data
+    s_map = sunpy.map.Map(filename)
 
-    # Cropping to desired range
-    # map = sunpy.map.Map(filename)
-    # image_data = map.submap(bottom_left, top_right).data
+    # rotating such that north is top of image
+    mat = s_map.rotation_matrix
+    s_map = s_map.rotate(rmatrix=mat)
+
+    # radius of sun in arcseconds
+    radius = s_map.rsun_arcseconds * u.arcsec
+
+    # crop so only the sun is present
+    top_right = SkyCoord(radius, radius, frame=s_map.coordinate_frame)
+    bottom_left = SkyCoord(-radius, -radius, frame=s_map.coordinate_frame)
+    submap = s_map.submap(bottom_left, top_right)
+
+    # get image data
+    image_data = submap.data
 
     # clip data
     image_data = np.clip(image_data, min, max)
@@ -68,11 +71,9 @@ def save_to_png(name, fits_path, png_path, min, max, w, h, i):
 
     # format data, and convert to image
     image = Image.fromarray(np.uint8(image_data * 255), 'L')
-    # crop to diameter of sun
+
+    # resize
     image = image.resize((w, h), Image.LANCZOS)
-    # flip image to match original orientation.
-    image = image.transpose(Image.FLIP_TOP_BOTTOM)
-    # rotate images to match
 
     # date:
     y = name[:4]
@@ -121,6 +122,7 @@ os.makedirs(png_path) if not os.path.exists(png_path) else None
 
 
 error_path = "DATA/error_handling/"
+os.makedirs(error_path) if not os.path.exists(error_path) else None
 f1 = open(f"{error_path}{args.name}_ValueError.txt", 'w')
 
 files = np.sort(os.listdir(fits_path))
@@ -142,7 +144,7 @@ stereo_times = np.array([datetime.strptime(time, "%Y.%m.%d_%H:%M:%S")
 # index for times
 index = 0
 
-for filename in os.listdir(fits_path):
+for filename in files:
     try:
         index = save_to_png(name=filename,
                             fits_path=fits_path,
@@ -151,9 +153,15 @@ for filename in os.listdir(fits_path):
                             max=max,
                             w=w,
                             h=h,
-                            i=0
+                            i=index
                             )
     except ValueError as err:
+        print(f"Error: {filename}")
+        f1.write(f"{filename}\t{err}\n")
+    except TypeError as err:
+        print(f"Error: {filename}")
+        f1.write(f"{filename}\t{err}\n")
+    except OSError as err:
         print(f"Error: {filename}")
         f1.write(f"{filename}\t{err}\n")
 
