@@ -49,48 +49,29 @@ HMI = False
 def save_to_png(name, fits_path, png_path, min, max, w, h,
                 normalise=False, rotate=False, abs=False,
                 crop=False, top_right=None, bottom_left=None):
-    print(name)
-    filename = fits_path + name + ".fits"
-    hdul = fits.open(filename, memmap=True, ext=0)
-    hdul.verify("fix")
-    if not crop:
-        image_data = hdul[1].data
-    else:
-        # Cropping to desired range
-        map = sunpy.map.Map(filename)
-        if rotate:
-            map = map.rotate(angle=180 * u.deg)
+    filename = fits_path + name
+    print(filename)
+    map_ref = sunpy.map.Map(filename)
+    mat = map_ref.rotation_matrix
+    map_ref = map_ref.rotate(rmatrix=mat)
 
-        # Cropping
-        image_data = map.submap(bottom_left, top_right).data
-
+    # crop so only sun is shown
+    radius = map_ref.rsun_obs
+    top_right = SkyCoord(radius, radius, frame=map_ref.coordinate_frame)
+    bottom_left = SkyCoord(-radius, -radius, frame=map_ref.coordinate_frame)
+    submap = map_ref.submap(bottom_left, top_right)
     # clip data between (min, max):
+    image_data = submap.data
     image_data = np.clip(image_data, min, max)
-
-    if normalise:
-        med = hdul[1].header['DATAMEDN']
-        # make sure median is between min and max:
-        np.clip(med, min, max)
-        image_data = image_data/med
-
-    if abs:
-        image_data = np.abs(image_data)
-        min = np.max([0, min])
-
-    # translate data so it's between (0, max-min):
+     # translate data so it's between (0, max-min):
     image_data -= min
     # normalise data so it's between (0, 1):
     image_data = image_data/(max - min)
 
     # format data, and convert to image
     image = Image.fromarray(np.uint8(image_data * 255), 'L')
-    # crop to diameter of sun
+    # resize to width x height
     image = image.resize((w, h), Image.LANCZOS)
-    # flip image to match original orientation.
-    image = image.transpose(Image.FLIP_TOP_BOTTOM)
-    # rotate images to match
-    if rotate and not crop:
-        image = image.transpose(Image.ROTATE_180)
 
     image.save(png_path + name + ".png")
 
