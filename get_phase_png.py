@@ -9,7 +9,7 @@ max = 0.2  # maximum value for magnetograms
 min = -0.2  # minimum value for magnetograms
 
 fits_path = "DATA/fits_phase_maps/"
-png_path = "DATA/png_phase_maps/"
+png_path = "DATA/png_phase/"
 error_path = "DATA/error_handling/"
 
 # make folder if it doesn't exist
