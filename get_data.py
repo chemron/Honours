@@ -124,7 +124,7 @@ def get_data(name: str, series: str, segment: str, start: str, end: str,
             e_time += timedelta(days=1)
             continue
 
-        urls = request.urls.url.reindex(index)
+        urls = request.urls.url.reindex(index).dropna()
 
         os.makedirs(path) if not os.path.exists(path) else None
 
