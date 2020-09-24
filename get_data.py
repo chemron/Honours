@@ -62,7 +62,7 @@ args = parser.parse_args()
 
 
 def get_data(name: str, series: str, segment: str, start: str, end: str,
-             cadence: int, wavelength: int, path: str):
+             cadence: int, wavelength: int, path: str, fmt: str):
 
     wavelength = wavelength*u.AA
     # start time for downloading
@@ -110,7 +110,7 @@ def get_data(name: str, series: str, segment: str, start: str, end: str,
                 continue
 
         # get times:
-        times = np.array([datetime.strptime(time, "%Y-%m-%dT%H:%M:%SZ")
+        times = np.array([datetime.strptime(time, fmt)
                           for time in table["T_REC"]])
 
         index, dates = get_index(times, s_time, e_time, cadence)
@@ -217,6 +217,14 @@ n = len(args.instruments)
 
 for i in range(n):
     try:
+        # date string format
+        if args.instruments[i] == "AIA":
+            fmt = "%Y-%m-%dT%H:%M:%SZ"
+        elif args.instruments[i] == "HMI":
+            fmt = '%Y.%m.%d_%H:%M:%S_TAI'
+        else:
+            raise Exception("Only accepts AIA or HMI instrument")
+
         print(args.instruments[i],
               args.segment[i],
               args.series[i],
@@ -232,7 +240,8 @@ for i in range(n):
                  end=args.end,
                  cadence=args.cadence,
                  wavelength=args.wavelength[i],
-                 path=args.path)
+                 path=args.path,
+                 fmt=fmt)
     except HTTPError as e:
         print(e)
         pass

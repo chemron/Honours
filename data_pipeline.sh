@@ -24,11 +24,12 @@
 #         --wavelength 304 \
 
 python get_data.py \
-        --instruments 'AIA' 'HMI' \
-        --series 'aia.lev1_euv_12s' 'hmi.m_45s' \
-        --segment 'image' 'magnetogram' \
+        --instruments 'HMI' 'AIA' \
+        --series 'hmi.m_45s' 'aia.lev1_euv_12s' \
+        --segment 'magnetogram' 'image' \
         --start '2012-08-29 00:00:00' \
         --end '2020-08-03 00:00:00' \
         --cadence 12 \
         --path  './DATA/' \
-        --wavelength 304 0 \
+        --wavelength 0 304 \
+
