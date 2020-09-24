@@ -70,7 +70,7 @@ def get_data(name: str, series: str, segment: str, start: str, end: str,
     # time of end of downloading
     f_time = datetime.fromisoformat(end)
     # take data from 10 days at a time
-    step_time = timedelta(days=20)
+    step_time = timedelta(days=8)
     # time of end of this step:
     e_time = s_time + step_time
     # time between searches
@@ -87,7 +87,7 @@ def get_data(name: str, series: str, segment: str, start: str, end: str,
                 a.jsoc.Notify(email),
                 a.jsoc.Series(series),
                 a.jsoc.Segment(segment),
-                a.Sample(0.3*u.hour)
+                a.Sample(12*u.hour)
                 ]
 
         if wavelength != 0:
@@ -119,7 +119,12 @@ def get_data(name: str, series: str, segment: str, start: str, end: str,
 
         request = get_request(res, index)
 
-        urls = request.urls.url[index]
+        if request.has_failed():
+            s_time = e_time
+            e_time += timedelta(days=1)
+            continue
+
+        urls = request.urls.url.reindex(index)
 
         os.makedirs(path) if not os.path.exists(path) else None
 

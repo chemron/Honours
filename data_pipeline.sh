@@ -27,7 +27,7 @@ python get_data.py \
         --instruments 'HMI' 'AIA' \
         --series 'hmi.m_45s' 'aia.lev1_euv_12s' \
         --segment 'magnetogram' 'image' \
-        --start '2012-08-29 00:00:00' \
+        --start '2013-04-03 00:00:00' \
         --end '2020-08-03 00:00:00' \
         --cadence 12 \
         --path  './DATA/' \
