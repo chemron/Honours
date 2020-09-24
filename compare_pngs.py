@@ -3,11 +3,12 @@ import numpy as np
 from datetime import datetime, timedelta
 from PIL import Image
 
-
-png_path_1 = "DATA/png_aia/"
-png_path_2 = "DATA/png_stereo_aia/"
-time_path = "DATA/aia_stereo_times.txt"
-combined_path = "DATA/png_stereo_aia_combined/"
+data_1 = "phase"
+data_2 = "stereo"
+png_path_1 = f"DATA/png_{data_1}/"
+png_path_2 = f"DATA/png_{data_2}_{data_1}/"
+time_path = f"DATA/{data_1}_{data_2}_times.txt"
+combined_path = f"DATA/png_{data_2}_{data_1}_combined/"
 
 os.makedirs(combined_path) if not os.path.exists(combined_path) else None
 
@@ -19,8 +20,14 @@ def join_images(png_1, png_2, filename):
     images = [Image.open(x) for x in [png_1, png_2]]
     widths, heights = zip(*(i.size for i in images))
 
-    total_width = sum(widths)
     max_height = max(heights)
+    for i in range(len(images)):
+        if heights[i] < max_height:
+            im_ratio = round(widths[i]/heights[i])
+            images[i] = images[i].resize((max_height*im_ratio, max_height))
+
+    widths = [i.width for i in images]
+    total_width = sum(widths)
 
     new_im = Image.new('RGB', (total_width, max_height))
 
@@ -43,11 +50,18 @@ times_2 = np.array([datetime.strptime(time, "%Y.%m.%d_%H:%M:%S")
                     for time in times_2
                     ])
 
+
+def get_datetime(pngs):
+    for f in pngs:
+        info = f.split("_")
+        date_str = info[1] + info[2][:8]
+        date_t = datetime.strptime(date_str, "%Y.%m.%d%H:%M:%S")
+        yield date_t
+
+
 # get times of pngs
-png_times_1 = np.array([datetime.strptime(f, "AIA_%Y.%m.%d_%H:%M:%S.png")
-                        for f in pngs_1])
-png_times_2 = np.array([datetime.strptime(f[:26], "STEREO_%Y.%m.%d_%H:%M:%S")
-                        for f in pngs_2])
+png_times_1 = np.array(list(get_datetime(pngs_1)))
+png_times_2 = np.array(list(get_datetime(pngs_2)))
 
 time_index = 0
 png_index_1 = 0
@@ -77,7 +91,7 @@ while time_index < len(times_1):
         time_1 = png_times_1[png_index_1].strftime("%Y.%m.%d")
         time_2 = png_times_2[png_index_2].strftime("%Y.%m.%d")
 
-        filename = f"{combined_path}aia_stereo_{time_1}_{time_2}.png"
+        filename = f"{combined_path}{data_1}_{data_2}_{time_1}_{time_2}.png"
         join_images(f"{png_path_1}{pngs_1[png_index_1]}",
                     f"{png_path_2}{pngs_2[png_index_2]}",
                     filename)
