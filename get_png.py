@@ -5,6 +5,8 @@ import sunpy
 import sunpy.map
 from astropy.coordinates import SkyCoord
 import argparse
+from multiprocessing import Pool, cpu_count
+
 # from datetime import datetime
 
 # parse the optional arguments:
@@ -63,8 +65,12 @@ fits_path = f"./DATA/fits_{name}/"
 png_path = f"./DATA/png_{name.lower()}/"
 
 os.makedirs(png_path) if not os.path.exists(png_path) else None
-
-for filename in os.listdir(fits_path):
+files = np.sorted(os.listdir(fits_path))
+n = len(files)
+for i in range(0, n, 20) in files:
+    end = min(n, i + 20)
+    current = files[i:end]
+    
     save_to_png(name=filename[:-5],
                 fits_path=fits_path,
                 png_path=png_path,
