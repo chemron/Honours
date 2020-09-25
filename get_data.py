@@ -110,8 +110,15 @@ def get_data(name: str, series: str, segment: str, start: str, end: str,
                 continue
 
         # get times:
-        times = np.array([datetime.strptime(time, fmt)
-                          for time in table["T_REC"]])
+        times = []
+        for t in table["T_REC"]:
+            # account for leap second in 2016
+            if t == "2016-12-31T23:59:60Z":
+                time = "2017-01-01T00:00:00Z"
+            else:
+                time = t
+            times.append(datetime.strptime(time, fmt))
+        times = np.array(times)
 
         index, dates = get_index(times, s_time, e_time, cadence)
 
