@@ -5,7 +5,6 @@ import sunpy
 import sunpy.map
 from astropy.coordinates import SkyCoord
 import argparse
-from multiprocessing import Pool, cpu_count
 
 print("starting")
 # from datetime import datetime
@@ -72,25 +71,14 @@ already_downloaded = os.listdir(png_path)
 files = np.sort(os.listdir(fits_path))
 n = len(files)
 
-i = 0
-inputs = []
-while i < n:
-    while len(inputs) < 20:
-        filename = files[i]
-        if (filename[:-5] + ".png") not in already_downloaded:
-            input = (filename[:-5],
-                     fits_path,
-                     png_path,
-                     args.min,
-                     args.max,
-                     w,
-                     h)
-            inputs.append(input)
-        else:
-            print("Already Downloaded.")
-        i += 1
-
-    print(f"downloading {len(inputs)} files with {cpu_count()} cpus.")
-    pool = Pool(cpu_count())
-    pool.starmap(save_to_png, inputs)
-    inputs = []
+for filename in files:
+    if (filename[:-5] + ".png") not in already_downloaded:
+        save_to_png(filename[:-5],
+                    fits_path,
+                    png_path,
+                    args.min,
+                    args.max,
+                    w,
+                    h)
+    else:
+        print("already downloaded")
