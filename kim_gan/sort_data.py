@@ -8,7 +8,7 @@ import numpy as np
 parser = argparse.ArgumentParser()
 parser.add_argument("--input",
                     help="input folder of pngs",
-                    default="./DATA/png_aia/"
+                    default="../data_collection/DATA/png_aia/"
                     )
 parser.add_argument("--train",
                     help="folder for training pngs",
