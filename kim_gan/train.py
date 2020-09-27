@@ -3,19 +3,19 @@ import os
 import glob
 import time
 from random import shuffle
-from imageio import imread
-import pandas as pd
+
 import tensorflow as tf
 
-import keras.backend as K
-from keras.models import Model
-from keras.layers import Conv2D, ZeroPadding2D, \
+import tensorflow.keras.backend as K
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Conv2D, ZeroPadding2D, \
     BatchNormalization, Input, Dropout
-from keras.layers import Conv2DTranspose, Activation, Cropping2D
-from keras.layers import Concatenate
-from keras.layers.advanced_activations import LeakyReLU
-from keras.initializers import RandomNormal
-from keras.optimizers import Adam
+from tensorflow.keras.layers import Conv2DTranspose, Activation, Cropping2D
+from tensorflow.keras.layers import Concatenate
+from tensorflow.keras.layers import LeakyReLU
+from tensorflow.keras.initializers import RandomNormal
+from tensorflow.keras.optimizers import Adam
+from datetime import datetime
 import argparse
 
 
@@ -37,12 +37,9 @@ tf.Session(config=config)
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_name",
                     help="name of model",
-                    default='trial_2'
+                    default='test_1'
                     )
-parser.add_argument("--input",
-                    help="folder name of input data",
-                    default='AIA'
-                    )
+
 parser.add_argument("--display_iter",
                     help="number of iterations between each test",
                     type=int,
@@ -62,7 +59,7 @@ DISPLAY_ITERS = args.display_iter
 
 # the input data:
 # (originally AIA or Atmospheric Imaging Assembly)
-INPUT_DATA = args.input
+INPUT_DATA = "AIA"
 # The data we want to reproduce:
 # (originally HMI or Helioseismic and Magnetic Imager)
 OUTPUT_DATA = 'HMI'
@@ -80,8 +77,8 @@ TRIAL_NAME = args.model_name
 
 MODE = INPUT_DATA + '_to_' + OUTPUT_DATA  # folder name for saving the model
 
-IMAGE_PATH_INPUT = './DATA/TRAIN/'+INPUT_DATA+'/*.png'  # input file path
-IMAGE_PATH_OUTPUT = './DATA/TRAIN/'+OUTPUT_DATA+'/*.png'  # ouptut file path
+IMAGE_PATH_INPUT = './DATA/aia_train/*'  # input file path
+IMAGE_PATH_OUTPUT = './DATA/aia_test/*'  # ouptut file path
 
 # make a folder for the trial if it doesn't already exist
 MODEL_PATH_MAIN = './MODELS/' + TRIAL_NAME + '/'
@@ -321,17 +318,10 @@ def LOAD_DATA(FILE_PATTERN):
 
 def GET_DATE(file):
     filename = file.split("/")[-1]  # filename is at end of file path
-    date_str = filename.split(".")[2]  # date string is after second "."
-    date_str = date_str.replace("_", "")  # remove underscores
-    date_str = date_str.replace("-", "")  # remove hyphens
-    date_str = date_str.replace("TAI", "z")  # TAI and Z are both UTC
-    date = pd.Timestamp(date_str)
+    date_str = filename.split("_")  # date string is after first "_"
+    date_str = date_str[1] + date_str[2]
+    date = datetime.strptime(date_str, "%Y.%m.%d%H:%M:%S.npy")
     return date
-
-
-def GET_TIMESTAMP(file):
-    date = GET_DATE(file)
-    return date.timestamp()
 
 
 # FN = filenames, NC_IN = #channels in input, NC_OUT = #channels in output
@@ -339,8 +329,8 @@ def GET_TIMESTAMP(file):
 # to 15 pixels any direction before returning it. This is probably to
 # prevent overfitting
 def READ_IMAGE(FN, NC_IN, NC_OUT):
-    IMG_A = imread(FN[0])
-    IMG_B = imread(FN[1])
+    IMG_A = np.load(FN[0])
+    IMG_B = np.load(FN[1])
     X, Y = np.random.randint(31), np.random.randint(31)
     if NC_IN != 1:
         IMG_A = np.pad(IMG_A, ((15, 15), (15, 15), (0, 0)), 'constant')
@@ -392,8 +382,8 @@ LIST_INPUT = LOAD_DATA(IMAGE_PATH_INPUT)
 LIST_OUTPUT = LOAD_DATA(IMAGE_PATH_OUTPUT)
 
 # sort lists based on timestamp
-LIST_OUTPUT = sorted(LIST_OUTPUT, key=GET_TIMESTAMP)
-LIST_INPUT = sorted(LIST_INPUT, key=GET_TIMESTAMP)
+LIST_OUTPUT = sorted(LIST_OUTPUT)
+LIST_INPUT = sorted(LIST_INPUT)
 
 
 i = 0  # index of LIST_INPUT
@@ -406,18 +396,12 @@ while i < len(LIST_INPUT) and j < len(LIST_OUTPUT):
     output = LIST_OUTPUT[j]
     out_time = GET_DATE(output)
     # if input is after output, delete output:
-    if in_time.date() > out_time.date():
+    if in_time > out_time:
         del(LIST_OUTPUT[j])
     # if input is before output, delete input:
-    elif in_time.date() < out_time.date():
+    elif in_time < out_time:
         del(LIST_INPUT[i])
-    # if input is after output, delete output:
-    elif in_time.hour > out_time.hour:
-        del(LIST_OUTPUT[j])
-    # if input is before output, delete input:
-    elif in_time.hour < out_time.hour:
-        del(LIST_INPUT[i])
-    # else, date and hours are the same, so we have a pair!
+    # else: we have a pair!
     else:
         # increment both lists
         i += 1

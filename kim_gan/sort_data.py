@@ -1,29 +1,36 @@
 import os
 import argparse
-from shutil import copyfile
 from datetime import datetime
 import numpy as np
+from imageio import imread
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--input",
                     help="input folder of pngs",
-                    default="../data_collection/DATA/png_aia/"
+                    default="../data_collection/DATA/png_hmi/"
                     )
 parser.add_argument("--train",
                     help="folder for training pngs",
-                    default="./DATA/aia_train/"
+                    default="./DATA/hmi_train/"
                     )
 parser.add_argument("--test",
                     help="folder for training pngs",
-                    default="./DATA/aia_test/"
+                    default="./DATA/hmi_test/"
                     )
 
+args = parser.parse_args()
 
 input_folder = args.input
 train_folder = args.train
 test_folder = args.test
 test_months = (11, 12)
+
+
+def save_array(input, output):
+    img = imread(input)
+    np.save(output, img)
+
 
 # make folders
 os.makedirs(train_folder) if not os.path.exists(train_folder) else None
@@ -36,9 +43,10 @@ for png in files:
     date = f"{info[1]}_{info[2][:8]}"
     date = datetime.strptime(date, "%Y.%m.%d_%H:%M:%S")
     if date.month in test_months:
-        output_file = test_folder + png
+        output_file = test_folder + png[:-4]
     else:
-        output_file = train_folder + png
-    
+        output_file = train_folder + png[:-4]
+
     input_file = input_folder + png
-    copyfile(input_file, output_file)
+
+    save_array(input_file, output_file)

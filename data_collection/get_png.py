@@ -71,14 +71,23 @@ already_downloaded = os.listdir(png_path)
 files = np.sort(os.listdir(fits_path))
 n = len(files)
 
+error_path = "./DATA/error_handling/"
+os.makedirs(error_path) if not os.path.exists(error_path) else None
+f1 = open(f"{error_path}TypeError.txt", 'w')
+f2 = open(f"{error_path}OSError.txt", 'w')
+f3 = open(f"{error_path}IndexError.txt", 'w')
+
 for filename in files:
     if (filename[:-5] + ".png") not in already_downloaded:
-        save_to_png(filename[:-5],
-                    fits_path,
-                    png_path,
-                    args.min,
-                    args.max,
-                    w,
-                    h)
+        try:
+            save_to_png(filename[:-5],
+                        fits_path,
+                        png_path,
+                        args.min,
+                        args.max,
+                        w,
+                        h)
+        except TypeError as err:
+            f1.write(f"{filename}\t{err}\n")
     else:
         print("already downloaded")
