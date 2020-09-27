@@ -4,8 +4,6 @@ import glob
 import time
 from random import shuffle
 
-import tensorflow as tf
-
 import tensorflow.keras.backend as K
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Conv2D, ZeroPadding2D, \
@@ -15,9 +13,16 @@ from tensorflow.keras.layers import Concatenate
 from tensorflow.keras.layers import LeakyReLU
 from tensorflow.keras.initializers import RandomNormal
 from tensorflow.keras.optimizers import Adam
-from datetime import datetime
+from datetime import datetime, timedelta
 import argparse
+import tensorflow.compat.v1 as tf
 
+
+tf.disable_v2_behavior()
+
+print("Tensorflow version " + tf.__version__)
+print("Devices:")
+print(tf.config.list_physical_devices())
 
 # configure os environment
 os.environ['KERAS_BACKEND'] = 'tensorflow'
@@ -78,7 +83,7 @@ TRIAL_NAME = args.model_name
 MODE = INPUT_DATA + '_to_' + OUTPUT_DATA  # folder name for saving the model
 
 IMAGE_PATH_INPUT = './DATA/aia_train/*'  # input file path
-IMAGE_PATH_OUTPUT = './DATA/aia_test/*'  # ouptut file path
+IMAGE_PATH_OUTPUT = './DATA/hmi_train/*'  # ouptut file path
 
 # make a folder for the trial if it doesn't already exist
 MODEL_PATH_MAIN = './MODELS/' + TRIAL_NAME + '/'
@@ -292,7 +297,7 @@ LOSS_L = K.mean(K.abs(FAKE_B-REAL_B))
 LOSS_D = LOSS_D_REAL + LOSS_D_FAKE
 # gives the updates for the discriminator training
 TRAINING_UPDATES_D = Adam(lr=2e-4, beta_1=0.5
-                          ).get_updates(NET_D.trainable_weights, [], LOSS_D)
+                          ).get_updates(LOSS_D, NET_D.trainable_weights)
 # creates a function that trains the discriminator
 NET_D_TRAIN = K.function([REAL_A, REAL_B], [LOSS_D/2.0], TRAINING_UPDATES_D)
 
@@ -304,7 +309,7 @@ LOSS_G = LOSS_G_FAKE + 100 * LOSS_L
 TRAINING_UPDATES_G = Adam(
                           lr=2e-4,
                           beta_1=0.5
-                          ).get_updates(NET_G.trainable_weights, [], LOSS_G)
+                          ).get_updates(LOSS_G, NET_G.trainable_weights)
 # function to train the generator
 NET_G_TRAIN = K.function([REAL_A, REAL_B],
                          [LOSS_G_FAKE, LOSS_L],
@@ -395,17 +400,17 @@ while i < len(LIST_INPUT) and j < len(LIST_OUTPUT):
     in_time = GET_DATE(input)
     output = LIST_OUTPUT[j]
     out_time = GET_DATE(output)
-    # if input is after output, delete output:
-    if in_time > out_time:
-        del(LIST_OUTPUT[j])
-    # if input is before output, delete input:
-    elif in_time < out_time:
-        del(LIST_INPUT[i])
-    # else: we have a pair!
-    else:
-        # increment both lists
+    if abs(in_time - out_time) < timedelta(hours=1):
         i += 1
         j += 1
+    # if input is after output, delete output:
+    elif in_time > out_time:
+        del(LIST_OUTPUT[j])
+    # if input is before output, delete input:
+    else:
+        # in_time < out_time:
+        del(LIST_INPUT[i])
+
 
 # trim ends of lists so they are the same size
 length = min(i, j)
@@ -417,8 +422,7 @@ assert len(LIST_INPUT) == len(LIST_OUTPUT)
 # zips the data such that each element is a (input, output) pair
 LIST_TOTAL = list(zip(sorted(LIST_INPUT), sorted(LIST_OUTPUT)))
 
-print("Input Output Pairs:")
-print(LIST_TOTAL)
+
 # creates a generator to use for training
 TRAIN_BATCH = MINI_BATCH(LIST_TOTAL, BATCH_SIZE, NC_IN, NC_OUT)
 
