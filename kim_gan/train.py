@@ -58,9 +58,9 @@ parser.add_argument("--max_iter",
 args = parser.parse_args()
 
 # Hyper parameters
-NITERS = args.max_iter  # total number of iterations
 # number of iterations before display and model creation
 DISPLAY_ITERS = args.display_iter
+NITERS = args.max_iter  # total number of iterations
 
 # the input data:
 # (originally AIA or Atmospheric Imaging Assembly)
@@ -454,6 +454,14 @@ while GEN_ITERS <= NITERS:
     ERR_L_SUM += ERR_L
 
     GEN_ITERS += 1
+
+    f = open(MODEL_PATH_MAIN + "iter_loss.txt", "a+")
+    update_str = (
+        f"[ {EPOCH:0>3d} ][ {GEN_ITERS:0>6d} / {NITERS} ] LOSS_D: {ERR_D:0>5.3f} "
+        f"LOSS_G: {ERR_G:0>5.3f} LOSS_L: {ERR_L:0>5.3f}\n"
+        )
+    f.write(update_str)
+    f.close()
 
     # print training summary and save model
     if GEN_ITERS % DISPLAY_ITERS == 0:
