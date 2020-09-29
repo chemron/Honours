@@ -457,8 +457,8 @@ while GEN_ITERS <= NITERS:
 
     f = open(MODEL_PATH_MAIN + "iter_loss.txt", "a+")
     update_str = (
-        f"[ {EPOCH:0>3d} ][ {GEN_ITERS:0>6d} / {NITERS} ] LOSS_D: {ERR_D:0>5.3f} "
-        f"LOSS_G: {ERR_G:0>5.3f} LOSS_L: {ERR_L:0>5.3f}\n"
+        f"[ {EPOCH:0>3d} ][ {GEN_ITERS:0>6d} / {NITERS} ] LOSS_D: "
+        f"{ERR_D:0>5.3f} LOSS_G: {ERR_G:0>5.3f} LOSS_L: {ERR_L:0>5.3f}\n"
         )
     f.write(update_str)
     f.close()

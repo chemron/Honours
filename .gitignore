@@ -1,4 +1,6 @@
 */DATA/
 */MODELS/
+*/RESULTS/
 SCRIPTS/
 *.out
+*.ipynb
