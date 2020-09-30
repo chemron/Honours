@@ -10,7 +10,12 @@
 #         # --FITS_path "DATA/fits_stereo/" \
 #         # --png_path "DATA/png_stereo/"
 
+# python get_png.py \
+#         --min -100 \
+#         --max 100 \
+#         --name "HMI" \
+
 python get_png.py \
-        --min -100 \
-        --max 100 \
-        --name "HMI" \
+        --min 0 \
+        --name "AIA" \
+

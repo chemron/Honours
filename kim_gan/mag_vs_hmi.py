@@ -13,9 +13,10 @@ result_dir = f"RESULTS/{model}/{x}_to_{g}/"
 
 png_dir = f"RESULTS/{model}/{x}_to_{g}_PNG/"
 
-os.makedirs(png_dir) if not os.path.exists(png_dir) else None
-
 iters = np.sort(os.listdir(result_dir))
+# just use 200000
+iters = [iters[-1]]
+print(iters)
 
 
 def join_images(filename, pngs):
@@ -52,6 +53,8 @@ def GET_DATE_STR(file):
 
 for iter in iters:
     path = result_dir + iter + "/"
+    save_path = png_dir + iter + "/"
+    os.makedirs(save_path) if not os.path.exists(save_path) else None
     files = np.sort(os.listdir(path))
     for filename in files:
         mag = path + filename
@@ -65,9 +68,13 @@ for iter in iters:
         if y is not None:
             if os.path.isfile(y_file):
                 pngs.append(y_file)
+        else:
+            print(f"File {y_file} does not exist.")
 
         pngs.append(mag)
 
         print(*pngs)
 
-        join_images(png_dir, pngs)
+        save_name = f"{save_path}COMBINED_{date}.png"
+
+        join_images(save_name, pngs)

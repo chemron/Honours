@@ -19,7 +19,7 @@ parser.add_argument("--min",
 parser.add_argument("--max",
                     help="upper bound cutoff pixel value for AIA",
                     type=int,
-                    default=800
+                    default=None
                     )
 
 parser.add_argument("--name",
@@ -47,6 +47,10 @@ def save_to_png(name, fits_path, png_path, min, max, w, h):
     submap = map_ref.submap(bottom_left, top_right)
     # clip data between (min, max):
     image_data = submap.data
+
+    if max is None:
+        max = np.percentile(image_data, 50)*15
+
     image_data = np.clip(image_data, min, max)
     # translate data so it's between (0, max-min):
     image_data -= min
@@ -68,7 +72,7 @@ os.makedirs(png_path) if not os.path.exists(png_path) else None
 
 already_downloaded = os.listdir(png_path)
 
-files = np.sort(os.listdir(fits_path))
+files = np.sort(os.listdir(fits_path))[::-1]
 n = len(files)
 
 error_path = "./DATA/error_handling/"
@@ -77,6 +81,7 @@ f1 = open(f"{error_path}TypeError.txt", 'w')
 f2 = open(f"{error_path}OSError.txt", 'w')
 f3 = open(f"{error_path}IndexError.txt", 'w')
 
+print("starting")
 for filename in files:
     if (filename[:-5] + ".png") not in already_downloaded:
         try:
@@ -89,5 +94,9 @@ for filename in files:
                         h)
         except TypeError as err:
             f1.write(f"{filename}\t{err}\n")
+        except OSError as err:
+            f2.write(f"{filename}\t{err}\n")
+        except IndexError as err:
+            f3.write(f"{filename}\t{err}\n")
     else:
         print("already downloaded")

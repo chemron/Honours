@@ -28,8 +28,8 @@ def listdir_nohidden(path):
 
 # set parameters
 SLEEP_TIME = 1000
-DISPLAY_ITER = 50000
-MAX_ITER = 100000
+DISPLAY_ITER = 200000
+MAX_ITER = 200000
 MODE = 'AIA_to_HMI'
 INPUT = 'AIA'
 OUTPUT = 'MAG'
@@ -111,7 +111,7 @@ while ITER <= MAX_ITER:
         FAKE = NET_G_GEN(IMG)
         FAKE = ((FAKE[0] + 1) / 2.0 * 255.).clip(0, 255).astype('uint8')
         FAKE.shape = (ISIZE, ISIZE) if NC_IN == 1 else (ISIZE, ISIZE, NC_OUT)
-        SAVE_NAME = SAVE_PATH1 + OUTPUT + DATE
+        SAVE_NAME = SAVE_PATH1 + OUTPUT + "_" + DATE
         np.save(SAVE_NAME, FAKE)
 
     del MODEL
