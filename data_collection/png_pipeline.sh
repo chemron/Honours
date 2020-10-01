@@ -15,7 +15,12 @@
 #         --max 100 \
 #         --name "HMI" \
 
+# python get_png.py \
+#         --min 0 \
+#         --name "AIA" 
+
 python get_png.py \
-        --min 0 \
-        --name "AIA" \
+        --min 700 \
+        --name "stereo" \
+
 
