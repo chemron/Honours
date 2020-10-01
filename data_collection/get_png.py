@@ -8,7 +8,6 @@ import argparse
 from multiprocessing import Pool, cpu_count
 
 
-print("starting")
 # from datetime import datetime
 
 # parse the optional arguments:
@@ -22,19 +21,24 @@ parser.add_argument("--min",
 parser.add_argument("--name",
                     help="name of folder for AIA to be saved in",
                     default="AIA")
+parser.add_argument("--ext",
+                    help="file extension",
+                    default=".fits")
+
 
 args = parser.parse_args()
 
 
 w = h = 1024  # desired width and height of png
 name = args.name
+ext = args.ext
+
 
 n_cpus = min(cpu_count(), 8)
 
 
 def save_to_png(name, fits_path, png_path, min, w, h):
-    filename = fits_path + name + ".fits"
-    print(filename)
+    filename = fits_path + name + ext
     map_ref = sunpy.map.Map(filename)
     mat = map_ref.rotation_matrix
     map_ref = map_ref.rotate(rmatrix=mat)
@@ -60,7 +64,7 @@ def save_to_png(name, fits_path, png_path, min, w, h):
     image = Image.fromarray(np.uint8(image_data * 255), 'L')
     # resize to width x height
     image = image.resize((w, h), Image.LANCZOS)
-
+    print(png_path + name + ".png")
     image.save(png_path + name + ".png")
 
 
@@ -82,7 +86,6 @@ def catch(name, fits_path, png_path, min, w, h):
         f4.write(f"{filename}\t{err}\n")
 
 
-
 fits_path = f"./DATA/fits_{name}/"
 png_path = f"./DATA/png_{name.lower()}/"
 
@@ -99,12 +102,12 @@ already_downloaded = os.listdir(png_path)
 files = np.sort(os.listdir(fits_path))
 n = len(files)
 
-print("starting")
 inputs = []
 
 for filename in files:
-    if (filename[:-5] + ".png") not in already_downloaded:
-        inputs.append((filename[:-5],
+    fielname = filename[:-(len(ext))]
+    if (filename + ".png") not in already_downloaded:
+        inputs.append((filename,
                        fits_path,
                        png_path,
                        args.min,

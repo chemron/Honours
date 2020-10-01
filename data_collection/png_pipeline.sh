@@ -22,5 +22,6 @@
 python get_png.py \
         --min 700 \
         --name "stereo" \
+        --ext ".fts"
 
 
