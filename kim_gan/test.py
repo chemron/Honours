@@ -4,6 +4,7 @@ import numpy as np
 from tensorflow.keras.models import load_model
 import tensorflow.keras.backend as K
 import tensorflow.compat.v1 as tf
+import argparse
 
 
 tf.disable_v2_behavior()
@@ -26,18 +27,42 @@ def listdir_nohidden(path):
     return glob.glob(os.path.join(path, '*'))
 
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--model_name",
+                    help="name of model",
+                    default='test_1'
+                    )
+
+parser.add_argument("--display_iter",
+                    help="number of iterations between each test",
+                    type=int,
+                    default=20000
+                    )
+parser.add_argument("--max_iter",
+                    help="total number of iterations",
+                    type=int,
+                    default=500000
+                    )
+parser.add_argument("--input",
+                    help="input dataset",
+                    type=str,
+                    default="AIA"
+                    )
+args = parser.parse_args()
+
+
 # set parameters
 SLEEP_TIME = 1000
-DISPLAY_ITER = 200000
-MAX_ITER = 200000
+DISPLAY_ITER = args.display_iter
+MAX_ITER = args.max_iter
 MODE = 'AIA_to_HMI'
-INPUT = 'AIA'
+INPUT = args.input
 OUTPUT = 'MAG'
-OP1 = f'{INPUT}_to_{OUTPUT}'
+OP1 = f'{INPUT.upper()}_to_{OUTPUT}'
 
-TRIAL_NAME = 'P100_1'
+TRIAL_NAME = args.model_name
 
-TEST_PATH = './DATA/aia_test/*.npy'
+TEST_PATH = f'./DATA/{INPUT.lower()}_test/*.npy'
 
 ISIZE = 1024  # input size
 NC_IN = 1  # number of channels in the output

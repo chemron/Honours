@@ -12,7 +12,7 @@ parser.add_argument("--input",
                     )
 parser.add_argument("--train",
                     help="folder for training pngs",
-                    default="./DATA/hmi_train/"
+                    default=None
                     )
 parser.add_argument("--test",
                     help="folder for training pngs",
@@ -33,7 +33,8 @@ def save_array(input, output):
 
 
 # make folders
-os.makedirs(train_folder) if not os.path.exists(train_folder) else None
+if train_folder is not None:
+    os.makedirs(train_folder) if not os.path.exists(train_folder) else None
 os.makedirs(test_folder) if not os.path.exists(test_folder) else None
 
 files = np.sort(os.listdir(input_folder))
@@ -42,7 +43,7 @@ for png in files:
     info = png.split("_")
     date = f"{info[1]}_{info[2][:8]}"
     date = datetime.strptime(date, "%Y.%m.%d_%H:%M:%S")
-    if date.month in test_months:
+    if (date.month in test_months) or (train_folder is None):
         output_file = test_folder + png[:-4]
     else:
         output_file = train_folder + png[:-4]

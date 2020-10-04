@@ -1,11 +1,29 @@
 import numpy as np
 from PIL import Image
 import os
+import argparse
 
-x = "AIA"  # test input
-y = "HMI"  # test output
+parser = argparse.ArgumentParser()
+parser.add_argument("--model_name",
+                    help="name of model",
+                    default='test_1'
+                    )
+parser.add_argument("--input",
+                    help="input dataset",
+                    type=str,
+                    default="AIA"
+                    )
+parser.add_argument("--output",
+                    help="dataset for comparison",
+                    type=str,
+                    default=None
+                    )
+args = parser.parse_args()
+
+x = args.input  # test input
+y = args.output  # test output
 g = "MAG"  # generator output
-model = "P100_1"
+model = args.model_name
 
 input_test_dir = f"DATA/{x.lower()}_test/"
 output_test_dir = f"DATA/{y.lower()}_test/" if y is not None else None

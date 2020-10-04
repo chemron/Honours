@@ -1,1 +1,4 @@
-python mag_vs_hmi.py
+python mag_vs_hmi.py \
+    --model_name 'P100_2' \
+    --input "AIA" \
+    --output "HMI"

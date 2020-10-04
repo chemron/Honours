@@ -39,6 +39,7 @@ n_cpus = min(cpu_count(), 8)
 
 def save_to_png(name, fits_path, png_path, min, w, h):
     filename = fits_path + name + ext
+    print(filename)
     map_ref = sunpy.map.Map(filename)
     mat = map_ref.rotation_matrix
     map_ref = map_ref.rotate(rmatrix=mat)
@@ -105,7 +106,7 @@ n = len(files)
 inputs = []
 
 for filename in files:
-    fielname = filename[:-(len(ext))]
+    filename = filename[:-(len(ext))]
     if (filename + ".png") not in already_downloaded:
         inputs.append((filename,
                        fits_path,
