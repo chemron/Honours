@@ -126,18 +126,27 @@ while ITER <= MAX_ITER:
         return np.concatenate(output, axis=0)
 
     for i in range(len(IMAGE_LIST1)):
-        # input image
-        IMG = np.load(IMAGE_LIST1[i]) / 255.0 * 2 - 1
-
         DATE = GET_DATE_STR(IMAGE_LIST1[i])
-        # reshapes IMG tensor to (BATCH_SIZE, ISIZE, ISIZE, NC_IN)
-        IMG.shape = (BATCH_SIZE, ISIZE, ISIZE, NC_IN)
-        # output image (generated HMI)
-        FAKE = NET_G_GEN(IMG)
-        FAKE = ((FAKE[0] + 1) / 2.0 * 255.).clip(0, 255).astype('uint8')
-        FAKE.shape = (ISIZE, ISIZE) if NC_IN == 1 else (ISIZE, ISIZE, NC_OUT)
-        SAVE_NAME = SAVE_PATH1 + OUTPUT + "_" + DATE
-        np.save(SAVE_NAME, FAKE)
+
+        if f'{OUTPUT}_{DATE}.npy' not in os.listdir(SAVE_PATH1):
+            SAVE_NAME = SAVE_PATH1 + OUTPUT + "_" + DATE
+
+            # input image
+            IMG = np.load(IMAGE_LIST1[i]) / 255.0 * 2 - 1
+
+            # reshapes IMG tensor to (BATCH_SIZE, ISIZE, ISIZE, NC_IN)
+            IMG.shape = (BATCH_SIZE, ISIZE, ISIZE, NC_IN)
+            # output image (generated HMI)
+            FAKE = NET_G_GEN(IMG)
+            FAKE = ((FAKE[0] + 1) / 2.0 * 255.).clip(0, 255).astype('uint8')
+            if NC_IN == 1:
+                FAKE.shape = (ISIZE, ISIZE)
+            else:
+                FAKE.shape = (ISIZE, ISIZE, NC_OUT)
+            SAVE_NAME = SAVE_PATH1 + OUTPUT + "_" + DATE
+            np.save(SAVE_NAME, FAKE)
+        else:
+            print("already downloaded")
 
     del MODEL
     K.clear_session()
