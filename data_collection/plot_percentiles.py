@@ -5,7 +5,7 @@ from matplotlib.dates import MonthLocator
 plt.switch_backend('agg')
 
 q = [0, 0.01, 0.1, 1, 5, 10, 25, 50, 75, 90, 95, 99, 99.9, 99.99, 100]
-percentiles = np.load("DATA/percentiles.npy")
+percentiles = np.load("DATA/percentiles.npy").T
 dates = np.load("DATA/dates.npy")
 plt_dates = [datetime.strptime(date, "%Y.%m.%d%H:%M:%S") for date in dates]
 
