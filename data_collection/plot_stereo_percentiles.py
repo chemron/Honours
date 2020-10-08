@@ -6,23 +6,22 @@ from matplotlib.dates import (MONTHLY, DateFormatter,
 plt.switch_backend('agg')
 
 q = [0, 0.01, 0.1, 1, 5, 10, 25, 50, 75, 90, 95, 99, 99.9, 99.99, 100]
-percentiles = np.load("DATA/percentiles.npy").T
-dates = np.load("DATA/dates.npy")
-plt_dates = [datetime.strptime(date, "%Y.%m.%d%H:%M:%S") for date in dates]
+percentiles = np.load("DATA/stereo_percentiles.npy").T
+dates = np.load("DATA/stereo_dates.npy")
+plt_dates = [datetime.strptime(date, "%Y%m%d%H%M%S") for date in dates]
 
 # plot percentiles vs dates
 fig, axs = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
-    axs[0].plot_date(plt_dates, percentiles[i],
+for i in range(len(percentiles), -1, -1):
+    axs[0].plot_date(plt_dates, percentiles[i] - 725,
                      label=f'${q[i]}$th percentile',
                      markersize=1)
-for i in range(len(percentiles)//2 - 1, -1, -1):
-    axs[1].plot_date(plt_dates, percentiles[i],
+for i in range(6, -1, -1):
+    axs[1].plot_date(plt_dates, percentiles[i] - 725,
                      label=f'${q[i]}$th percentile',
                      markersize=1)
 
-axs[0].set_yscale('log')
-axs[0].set_ylabel("Pixel Intensity (log scale)")
+
 axs[1].set_ylabel("Pixel Intensity")
 axs[1].set_ylim(-20, 5)
 
@@ -43,4 +42,4 @@ for ax in axs:
     ax.set_adjustable('box-forced')
 
 plt.tight_layout()
-fig.savefig("AIA_percentiles.png", bbox_inches='tight')
+fig.savefig("stereo_percentiles.png", bbox_inches='tight')

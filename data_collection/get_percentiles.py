@@ -21,19 +21,24 @@ def get_percentiles(filename):
     try:
         hdul = fits.open(fits_dir + filename)
         hdul.verify("fix")
-        data = hdul[1].data
+        if name == "AIA" or name == "HMI":
+            data = hdul[1].data
+
+        else:
+            data = hdul[0].data
         if data is not None:
             append_date(filename)
-            percentiles = np.percentile(np.nan_to_num(data).flatten(), q)
+            data = np.nan_to_num(data).flatten()
+            percentiles = np.percentile(data, q)
             return percentiles
-    except TypeError:
-        print(f"TypeError:{filename}")
-    except OSError:
-        print(f"OSError:{filename}")
-    except ValueError:
-        print(f"ValueError:{filename}")
-    except IndexError:
-        print(f"IndexError:{filename}")
+    except TypeError as err:
+        print(f"TypeError:{filename}, {err}")
+    except OSError as err:
+        print(f"OSError:{filename}, {err}")
+    except ValueError as err:
+        print(f"ValueError:{filename}, {err}")
+    except IndexError as err:
+        print(f"IndexError:{filename}, {err}")
 
 
 def append_date(filename):
@@ -45,7 +50,7 @@ def append_date(filename):
         date_str = date_str[1] + date_str[2]
     elif name == "stereo":
         date_str = date_str[0] + date_str[1]
-    elif name == "phase_maps":
+    elif name == "phase_map":
         date_str = date_str[2] + date_str[3]
     dates.append(date_str)
 
