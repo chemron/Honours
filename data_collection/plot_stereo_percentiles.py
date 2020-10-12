@@ -12,7 +12,7 @@ plt_dates = [datetime.strptime(date, "%Y%m%d%H%M%S") for date in dates]
 
 # plot percentiles vs dates
 fig, axs = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
-for i in range(len(percentiles), -1, -1):
+for i in range(len(percentiles)-1, -1, -1):
     axs[0].plot_date(plt_dates, percentiles[i] - 725,
                      label=f'${q[i]}$th percentile',
                      markersize=1)

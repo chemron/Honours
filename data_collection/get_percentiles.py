@@ -41,9 +41,9 @@ def get_percentiles(filename):
         if data is not None:
             name = filename.strip(".fits").strip('.fts')
             np.save(f"{np_dir}{name}", data)
-            append_date(name)
             data = np.nan_to_num(data).flatten()
             percentiles = np.percentile(data, q)
+            append_date(name)
             return percentiles
     except TypeError as err:
         print(f"TypeError:{filename}, {err}")
@@ -72,6 +72,8 @@ files = np.sort(os.listdir(fits_dir))
 percentiles = np.stack([p for f in files
                         if (p := get_percentiles(f)) is not None])
 
-assert len(percentiles) == len(dates)
+if len(percentiles) != len(dates):
+    print(len(percentiles), len(dates))
+    raise Exception "percentiles and dates have different sizes"
 np.save(f"DATA/{mode}_percentiles", percentiles)
 np.save(f"DATA/{mode}_dates", dates)
