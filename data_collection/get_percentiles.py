@@ -21,6 +21,12 @@ dates = []
 q = [0, 0.01, 0.1, 1, 5, 10, 25, 50, 75, 90, 95, 99, 99.9, 99.99, 100]
 
 
+def moving_average(a, n):
+    ret = np.cumsum(a, dtype=float)
+    ret[n:] = ret[n:] - ret[:-n]
+    return ret[n - 1:] / n
+
+
 def get_percentiles(filename):
     try:
         map_ref = sunpy.map.Map(fits_dir + filename)
@@ -43,8 +49,9 @@ def get_percentiles(filename):
             np.save(f"{np_dir}{name}", data)
             data = np.nan_to_num(data).flatten()
             percentiles = np.percentile(data, q)
-            append_date(name)
-            return percentiles
+            if percentiles is not None:
+                append_date(name)
+                return percentiles
     except TypeError as err:
         print(f"TypeError:{filename}, {err}")
     except OSError as err:
@@ -69,11 +76,12 @@ def append_date(name):
 
 
 files = np.sort(os.listdir(fits_dir))
+
 percentiles = np.stack([p for f in files
                         if (p := get_percentiles(f)) is not None])
 
 if len(percentiles) != len(dates):
     print(len(percentiles), len(dates))
-    raise Exception "percentiles and dates have different sizes"
+    raise Exception("percentiles and dates have different sizes")
 np.save(f"DATA/{mode}_percentiles", percentiles)
 np.save(f"DATA/{mode}_dates", dates)
