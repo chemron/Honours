@@ -40,7 +40,6 @@ for ax in axs:
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    ax.set_adjustable('box-forced')
 
 plt.tight_layout()
 fig.savefig("AIA_percentiles.png", bbox_inches='tight')
