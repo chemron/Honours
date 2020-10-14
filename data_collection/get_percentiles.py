@@ -21,12 +21,6 @@ dates = []
 q = [0, 0.01, 0.1, 1, 5, 10, 25, 50, 75, 90, 95, 99, 99.9, 99.99, 100]
 
 
-def moving_average(a, n):
-    ret = np.cumsum(a, dtype=float)
-    ret[n:] = ret[n:] - ret[:-n]
-    return ret[n - 1:] / n
-
-
 def get_percentiles(filename):
     try:
         map_ref = sunpy.map.Map(fits_dir + filename)

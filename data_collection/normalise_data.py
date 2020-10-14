@@ -1,4 +1,5 @@
 from datetime import datetime
+import os
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.dates import (MONTHLY, DateFormatter,
@@ -6,10 +7,13 @@ from matplotlib.dates import (MONTHLY, DateFormatter,
 plt.switch_backend('agg')
 
 
-np_dir = "DATA/np_AIA_not_normalised"
-percentiles = np.load("DATA/percentiles.npy").T
-dates = np.load("DATA/dates.npy")
-datetime_dates = [datetime.strptime(date, "%Y.%m.%d%H:%M:%S")
+np_dir = "DATA/np_AIA/"
+normal_np_dir = "DATA/np_AIA_normalised/"
+os.makedirs(normal_np_dir) if not os.path.exists(normal_np_dir) else None
+
+percentiles = np.load("DATA/AIA_percentiles.npy").T
+dates = np.load("DATA/AIA_dates.npy")
+datetime_dates = [datetime.strptime(date, "%Y%m%d%H%M%S")
                   for date in dates]
 
 # plot percentiles vs dates
@@ -22,9 +26,9 @@ axs[0].plot_date(datetime_dates, percentiles[8],
 
 # get cutoff
 
-cutoff = np.array([35 if (x < datetime(2014, 1, 1))
-                   else 10 if (x < datetime(2016, 1, 1))
-                   else 6 for x in datetime_dates])
+cutoff = np.array([45 if (x < datetime(2014, 1, 1))
+                   else 20 if (x < datetime(2015, 2, 1))
+                   else 8 for x in datetime_dates])
 
 axs[0].plot_date(datetime_dates, cutoff,
                  label='Outlier cutoff',
@@ -65,9 +69,13 @@ for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
                      label=f'${q[i]}$th percentile',
                      markersize=1)
 
+clip_max = np.max(normal_percentiles[-1][:60])
 normal_percentiles[-1] = np.clip(normal_percentiles[-1],
                                  None,
-                                 np.max(normal_percentiles[-1][:60]))
+                                 clip_max)
+normal_percentiles[-2] = np.clip(normal_percentiles[-2],
+                                 None,
+                                 clip_max)
 for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
     axs[3].plot_date(datetime_dates, normal_percentiles[i],
                      label=f'${q[i]}$th percentile',
@@ -94,7 +102,6 @@ for ax in axs:
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    ax.set_adjustable('box-forced')
 
 plt.tight_layout()
 fig.savefig("normalising_percentiles.png", bbox_inches='tight')
