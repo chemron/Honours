@@ -23,11 +23,12 @@ q = [0, 0.01, 0.1, 1, 5, 10, 25, 50, 75, 90, 95, 99, 99.9, 99.99, 100]
 
 def get_percentiles(filename):
     try:
+        print(filename)
         map_ref = sunpy.map.Map(fits_dir + filename)
 
         # not necessary for percentiles
-        # mat = map_ref.rotation_matrix
-        # map_ref = map_ref.rotate(rmatrix=mat)
+        mat = map_ref.rotation_matrix
+        map_ref = map_ref.rotate(rmatrix=mat)
 
         # crop so only sun is shown
         radius = map_ref.rsun_obs
@@ -77,5 +78,6 @@ percentiles = np.stack([p for f in files
 if len(percentiles) != len(dates):
     print(len(percentiles), len(dates))
     raise Exception("percentiles and dates have different sizes")
-np.save(f"DATA/{mode}_percentiles", percentiles)
-np.save(f"DATA/{mode}_dates", dates)
+
+np.save(f"DATA/np_objects/{mode}_percentiles", percentiles)
+np.save(f"DATA/np_objects/{mode}_dates", dates)

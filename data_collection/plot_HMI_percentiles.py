@@ -11,15 +11,6 @@ dates = np.load("DATA/HMI_dates.npy")
 plt_dates = np.array([datetime.strptime(date, "%Y%m%d%H%M%S")
                       for date in dates])
 
-# crop between start and end
-start = datetime(2014, 1, 1)
-end = datetime(2014, 2, 1)
-
-start_i = np.argmax(plt_dates > start)
-end_i = np.argmax(plt_dates > end)
-plt_dates = plt_dates[start_i:end_i]
-percentiles = percentiles[start_i:end_i]
-
 
 # plot percentiles vs dates
 percentiles = percentiles.T
@@ -39,12 +30,11 @@ axs[1].set_ylabel("Absolute pixel value (log scale)")
 axs[1].set_yscale('log')
 
 
-# GET TICkS
-# rule = rrulewrapper(MONTHLY, interval=6)
-rule = rrulewrapper(DAILY)
+# GET TICKS
+rule = rrulewrapper(MONTHLY, interval=6)
 loc = RRuleLocator(rule)
 axs[1].xaxis.set_major_locator(loc)
-formatter = DateFormatter('%d/%m/%y')
+formatter = DateFormatter('%m/%y')
 axs[1].xaxis.set_major_formatter(formatter)
 axs[1].xaxis.set_tick_params(rotation=30, labelsize=10)
 axs[1].set_xlabel("Date")
@@ -56,4 +46,4 @@ for ax in axs:
     ax.set_adjustable('box-forced')
 
 plt.tight_layout()
-fig.savefig("HMI_percentiles_crop.png", bbox_inches='tight')
+fig.savefig("HMI_percentiles.png", bbox_inches='tight')

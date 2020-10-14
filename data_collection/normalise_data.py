@@ -4,17 +4,34 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.dates import (MONTHLY, DateFormatter,
                               rrulewrapper, RRuleLocator)
+import argparse
 plt.switch_backend('agg')
 
 
-np_dir = "DATA/np_AIA/"
-normal_np_dir = "DATA/np_AIA_normalised/"
+parser = argparse.ArgumentParser()
+parser.add_argument("--data",
+                    help="name of data",
+                    default='AIA'
+                    )
+parser.add_argument("--log",
+                    action="store_true",
+                    )
+args = parser.parse_args()
+mode = args.data
+
+# moving average over 50 images
+n = 50
+np_dir = f"DATA/np_{mode}/"
+normal_np_dir = f"DATA/np_{mode}_normalised/"
 os.makedirs(normal_np_dir) if not os.path.exists(normal_np_dir) else None
 
-percentiles = np.load("DATA/AIA_percentiles.npy").T
-dates = np.load("DATA/AIA_dates.npy")
+percentiles = np.load(f"DATA/np_objects/{mode}_percentiles.npy").T
+dates = np.load(f"DATA/np_objects/{mode}_dates.npy")
 datetime_dates = [datetime.strptime(date, "%Y%m%d%H%M%S")
                   for date in dates]
+# don't normalise data, just plot percentiles:
+just_plot = True
+w = h = 1024  # desired width and height of output
 
 # plot percentiles vs dates
 fig, axs = plt.subplots(4, 1, figsize=(10, 12), sharex=True)
@@ -41,10 +58,6 @@ dates = np.delete(dates, outlier_indicies)
 datetime_dates = np.delete(datetime_dates, outlier_indicies)
 
 
-# moving average over 50 images
-n = 50
-
-
 def moving_average(a, n):
     ret = np.cumsum(a, dtype=float)
     ret[n:] = ret[n:] - ret[:-n]
@@ -55,7 +68,6 @@ rolling_75p = moving_average(percentiles[8], n)
 rolling_dates = dates[n//2-1:-n//2]
 percentiles = percentiles.T[n//2-1:-n//2].T
 datetime_dates = datetime_dates[n//2-1:-n//2]
-
 normal_percentiles = percentiles/rolling_75p
 
 axs[1].plot_date(datetime_dates, rolling_75p,
@@ -69,13 +81,9 @@ for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
                      label=f'${q[i]}$th percentile',
                      markersize=1)
 
-clip_max = np.max(normal_percentiles[-1][:60])
-normal_percentiles[-1] = np.clip(normal_percentiles[-1],
-                                 None,
-                                 clip_max)
-normal_percentiles[-2] = np.clip(normal_percentiles[-2],
-                                 None,
-                                 clip_max)
+clip_max = np.max(normal_percentiles[-1][:50])
+normal_percentiles = normal_percentiles.clip(None, clip_max)
+
 for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
     axs[3].plot_date(datetime_dates, normal_percentiles[i],
                      label=f'${q[i]}$th percentile',
@@ -83,19 +91,24 @@ for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
 
 axs[0].set_ylabel("Pixel Intensity")
 axs[1].set_ylabel("Pixel Intensity")
-axs[2].set_ylabel("Pixel Intensity (log scale)")
-axs[3].set_ylabel("Pixel Intensity (log scale)")
-axs[2].set_yscale('log')
-axs[3].set_yscale('log')
+
+if args.log:
+    axs[2].set_ylabel("Pixel Intensity (log scale)")
+    axs[3].set_ylabel("Pixel Intensity (log scale)")
+    axs[2].set_yscale('log')
+    axs[3].set_yscale('log')
+else:
+    axs[2].set_ylabel("Pixel Intensity")
+    axs[3].set_ylabel("Pixel Intensity")
 
 # GET TICkS
 rule = rrulewrapper(MONTHLY, interval=6)
 loc = RRuleLocator(rule)
-axs[2].xaxis.set_major_locator(loc)
+axs[3].xaxis.set_major_locator(loc)
 formatter = DateFormatter('%m/%y')
-axs[2].xaxis.set_major_formatter(formatter)
-axs[2].xaxis.set_tick_params(rotation=30, labelsize=10)
-axs[2].set_xlabel("Date")
+axs[3].xaxis.set_major_formatter(formatter)
+axs[3].xaxis.set_tick_params(rotation=30, labelsize=10)
+axs[3].set_xlabel("Date")
 
 for ax in axs:
     # Put a legend to the right of the current axis
@@ -104,4 +117,29 @@ for ax in axs:
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
 plt.tight_layout()
-fig.savefig("normalising_percentiles.png", bbox_inches='tight')
+fig.savefig(f"percentile_plots/{mode}_normalising_percentiles.png",
+            bbox_inches='tight')
+
+
+# normalise data
+data = np.sort(os.listdir(np_dir))
+data = np.delete(data, outlier_indicies)
+data = data[n//2-1:-n//2]
+
+print(len(data), len(rolling_75p))
+
+if not just_plot:
+    import cv2
+    for i in range(len(data)):
+        # what we need to divide by to normalise with clip_max at 1
+        name = data[i]
+        divider = rolling_75p[i]*clip_max
+        filename = np_dir + name
+        img = np.load(filename)
+        img = img/divider
+        img = img.clip(0, 1)
+        try:
+            img = cv2.resize(img, dsize=(w, h))
+            np.save(normal_np_dir + name, img)
+        except cv2.error as e:
+            print(f"{name}: {e}")
