@@ -16,6 +16,9 @@ parser.add_argument("--data",
 parser.add_argument("--log",
                     action="store_true",
                     )
+parser.add_argument("--just_plot",
+                    action="store_true",
+                    )
 args = parser.parse_args()
 mode = args.data
 
@@ -30,7 +33,7 @@ dates = np.load(f"DATA/np_objects/{mode}_dates.npy")
 datetime_dates = [datetime.strptime(date, "%Y%m%d%H%M%S")
                   for date in dates]
 # don't normalise data, just plot percentiles:
-just_plot = True
+just_plot = args.just_plot
 w = h = 1024  # desired width and height of output
 
 # plot percentiles vs dates

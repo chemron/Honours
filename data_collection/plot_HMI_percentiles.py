@@ -6,8 +6,8 @@ from matplotlib.dates import (MONTHLY, DAILY, DateFormatter,
 plt.switch_backend('agg')
 
 q = [0, 0.01, 0.1, 1, 5, 10, 25, 50, 75, 90, 95, 99, 99.9, 99.99, 100]
-percentiles = np.load("DATA/HMI_percentiles.npy")
-dates = np.load("DATA/HMI_dates.npy")
+percentiles = np.load("DATA/np_objects/HMI_percentiles.npy")
+dates = np.load("DATA/np_objects/HMI_dates.npy")
 plt_dates = np.array([datetime.strptime(date, "%Y%m%d%H%M%S")
                       for date in dates])
 
@@ -42,7 +42,7 @@ for ax in axs:
     # Put a legend to the right of the current axis
     box = ax.get_position()
     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-    # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
     ax.set_adjustable('box-forced')
 
 plt.tight_layout()
