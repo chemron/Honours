@@ -132,13 +132,13 @@ while ITER <= MAX_ITER:
             SAVE_NAME = SAVE_PATH1 + OUTPUT + "_" + DATE
 
             # input image
-            IMG = np.load(IMAGE_LIST1[i]) / 255.0 * 2 - 1
+            IMG = np.load(IMAGE_LIST1[i]) * 2 - 1
 
             # reshapes IMG tensor to (BATCH_SIZE, ISIZE, ISIZE, NC_IN)
             IMG.shape = (BATCH_SIZE, ISIZE, ISIZE, NC_IN)
             # output image (generated HMI)
             FAKE = NET_G_GEN(IMG)
-            FAKE = ((FAKE[0] + 1) / 2.0 * 255.).clip(0, 255).astype('uint8')
+            FAKE = FAKE[0]
             if NC_IN == 1:
                 FAKE.shape = (ISIZE, ISIZE)
             else:

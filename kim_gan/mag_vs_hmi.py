@@ -37,9 +37,7 @@ iters = np.sort(os.listdir(result_dir))
 print(iters)
 
 
-def join_images(filename, pngs):
-    images = [Image.fromarray(np.load(x)) for x in pngs]
-
+def join_images(filename, images):
     widths, heights = zip(*(i.size for i in images))
 
     max_height = max(heights)
@@ -81,17 +79,17 @@ for iter in iters:
         x_file = f"{input_test_dir}{x}_{date}.npy"
         y_file = f"{output_test_dir}{y}_{date}.npy" if y is not None else None
 
-        pngs = [x_file]
+        pngs = [Image.fromarray((np.load(x_file)*255).astype('uint8'))]
 
         if y is not None:
             if os.path.isfile(y_file):
-                pngs.append(y_file)
+                y_img = ((np.load(y_file) + 1) / 2 * 255).astype('uint8')
+                pngs.append(Image.fromarray(y_img))
         else:
             print(f"File {y_file} does not exist.")
 
-        pngs.append(mag)
-
-        print(*pngs)
+        mag_img = ((np.load(mag) + 1) / 2 * 255).astype('uint8')
+        pngs.append(Image.fromarray(mag_img))
 
         save_name = f"{save_path}COMBINED_{date}.png"
 
