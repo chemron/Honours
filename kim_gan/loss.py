@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 plt.switch_backend('agg')
 
-n = 10000
+n = 5000
 
 
 def moving_average(a, n):

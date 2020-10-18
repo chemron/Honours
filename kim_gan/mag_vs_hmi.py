@@ -33,7 +33,7 @@ png_dir = f"RESULTS/{model}/{x}_to_{g}_PNG/"
 
 iters = np.sort(os.listdir(result_dir))
 # just use 200000
-iters = [iters[-1]]
+# iters = [iters[-1]]
 print(iters)
 
 
