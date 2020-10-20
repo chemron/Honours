@@ -19,6 +19,9 @@ parser.add_argument("--log",
 parser.add_argument("--just_plot",
                     action="store_true",
                     )
+parser.add_argument("--cam",
+                    action="store_true",
+                    )
 args = parser.parse_args()
 mode = args.data
 
@@ -39,6 +42,8 @@ w = h = 1024  # desired width and height of output
 # plot percentiles vs dates
 fig, axs = plt.subplots(4, 1, figsize=(10, 12), sharex=True)
 
+# cameron factor
+cam_factor = percentiles[7]*15
 
 axs[0].plot_date(datetime_dates, percentiles[8],
                  label='75th percentile',
@@ -57,6 +62,7 @@ axs[0].plot_date(datetime_dates, cutoff,
 outlier_indicies = np.nonzero(percentiles[8] < cutoff)
 
 percentiles = np.delete(percentiles, outlier_indicies, 1)
+cam_factor = np.delete(cam_factor, outlier_indicies)
 dates = np.delete(dates, outlier_indicies)
 datetime_dates = np.delete(datetime_dates, outlier_indicies)
 
@@ -70,9 +76,10 @@ def moving_average(a, n):
 rolling_75p = moving_average(percentiles[8], n)
 rolling_dates = dates[n//2-1:-n//2]
 percentiles = percentiles.T[n//2-1:-n//2].T
+cam_factor = cam_factor[n//2-1:-n//2]
 datetime_dates = datetime_dates[n//2-1:-n//2]
 normal_percentiles = percentiles/rolling_75p
-
+cam_normal = cam_factor/rolling_75p
 axs[1].plot_date(datetime_dates, rolling_75p,
                  label=f'Rolling 75th percentile\n(over {n} images)',
                  markersize=1)
@@ -83,13 +90,28 @@ for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
     axs[2].plot_date(datetime_dates, normal_percentiles[i],
                      label=f'${q[i]}$th percentile',
                      markersize=1)
+if args.cam:
+    axs[2].plot_date(datetime_dates, cam_normal,
+                     label='Cam factor',
+                     markersize=1,
+                     c='k'
+                     )
 
-clip_max = np.max(normal_percentiles[-1][:50])
+# clip_max = np.max(normal_percentiles[-1][:50])
+# use the average 99.99th percentile
+clip_max = np.average(normal_percentiles[-2])
+print(clip_max)
 normal_percentiles = normal_percentiles.clip(None, clip_max)
+cam_normal = cam_normal.clip(None, clip_max)
 
 for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
     axs[3].plot_date(datetime_dates, normal_percentiles[i],
                      label=f'${q[i]}$th percentile',
+                     markersize=1)
+if args.cam:
+    axs[3].plot_date(datetime_dates, cam_normal,
+                     label='Cam factor',
+                     c='k',
                      markersize=1)
 
 axs[0].set_ylabel("Pixel Intensity")
@@ -99,7 +121,7 @@ if args.log:
     axs[2].set_ylabel("Pixel Intensity (log scale)")
     axs[3].set_ylabel("Pixel Intensity (log scale)")
     axs[2].set_yscale('log')
-    axs[3].set_yscale('log')
+    # axs[3].set_yscale('log')
 else:
     axs[2].set_ylabel("Pixel Intensity")
     axs[3].set_ylabel("Pixel Intensity")
@@ -120,8 +142,12 @@ for ax in axs:
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
 plt.tight_layout()
-fig.savefig(f"percentile_plots/{mode}_normalising_percentiles.png",
-            bbox_inches='tight')
+if args.cam:
+    fig.savefig(f"percentile_plots/cam_{mode}_normalising_percentiles.png",
+                bbox_inches='tight')
+else:
+    fig.savefig(f"percentile_plots/{mode}_normalising_percentiles.png",
+                bbox_inches='tight')
 
 
 # normalise data

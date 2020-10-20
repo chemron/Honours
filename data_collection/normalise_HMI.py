@@ -16,6 +16,9 @@ parser.add_argument("--data",
 parser.add_argument("--just_plot",
                     action="store_true",
                     )
+parser.add_argument("--cam",
+                    action="store_true",
+                    )
 args = parser.parse_args()
 mode = args.data
 
@@ -28,6 +31,7 @@ percentiles = np.load(f"DATA/np_objects/{mode}_percentiles.npy").T
 dates = np.load(f"DATA/np_objects/{mode}_dates.npy")
 datetime_dates = [datetime.strptime(date, "%Y%m%d%H%M%S")
                   for date in dates]
+cam_factor = percentiles[7]*15
 # don't normalise data, just plot percentiles:
 just_plot = args.just_plot
 w = h = 1024  # desired width and height of output
@@ -40,6 +44,11 @@ for i in range(len(percentiles)-1, - 1, -1):
     axs[0].plot_date(datetime_dates, percentiles[i],
                      label=f'${q[i]}$th percentile',
                      markersize=1)
+if args.cam:
+    axs[0].plot_date(datetime_dates, cam_factor,
+                     label='Cam factor',
+                     markersize=1,
+                     c='k')
 
 
 abs_max = abs(np.max(percentiles[-1]))
@@ -47,16 +56,25 @@ abs_min = abs(np.min(percentiles[0]))
 
 print(f"Absolute max: {abs_max}, Absolute min: {abs_min}")
 
-clip_max = np.max([abs_max, -abs_min])
+# clip_max = np.max([abs_max, -abs_min])
+# use 99th percentile:
+clip_max = np.average(percentiles[-2])
+print(clip_max)
 
 clipped_percentiles = percentiles.clip(-clip_max, clip_max)
 clipped_percentiles = clipped_percentiles/clip_max
+clipped_cam = cam_factor/clip_max
 
 for i in range(len(percentiles)-1, - 1, -1):
     axs[1].plot_date(datetime_dates, clipped_percentiles[i],
                      label=f'${q[i]}$th percentile',
                      markersize=1)
-
+if args.cam:
+    axs[1].plot_date(datetime_dates, clipped_cam,
+                     label='Cam factor',
+                     markersize=1,
+                     c='k')
+   
 axs[0].set_ylabel("Magnetic field strength (Gauss)")
 axs[1].set_ylabel("Normalised magnetic field strength")
 
@@ -76,8 +94,12 @@ for ax in axs:
     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
 plt.tight_layout()
-fig.savefig(f"percentile_plots/{mode}_normalising_percentiles.png",
-            bbox_inches='tight')
+if args.cam:
+    fig.savefig(f"percentile_plots/Cam_{mode}_normalising_percentiles.png",
+                bbox_inches='tight')
+else:
+    fig.savefig(f"percentile_plots/{mode}_normalising_percentiles.png",
+                bbox_inches='tight')
 
 # normalise data
 data = np.sort(os.listdir(np_dir))

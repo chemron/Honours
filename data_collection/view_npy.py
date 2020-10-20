@@ -3,12 +3,13 @@ import matplotlib.pyplot as plt
 import os
 
 plt.switch_backend("agg")
+modes = ["HMI", "AIA"]
+for mode in modes:
+    folder = f"DATA/np_{mode}_normalised/"
+    filename = folder + os.listdir(folder)[0]
 
-folder = "DATA/np_HMI_normalised/"
-filename = folder + os.listdir(folder)[0]
+    arr = np.load(filename)
+    print(np.max(arr), np.min(arr))
 
-arr = np.load(filename)
-print(np.max(arr), np.min(arr))
-
-plt.imsave("HMI_test.png", arr)
+    plt.imsave(f"{mode}_test.png", arr)
 
