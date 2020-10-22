@@ -1,5 +1,5 @@
 time python train.py \
-    --model_name "P100_3" \
+    --model_name "P100_99.99p" \
     --display_iter 50000 \
     --max_iter 200000
 

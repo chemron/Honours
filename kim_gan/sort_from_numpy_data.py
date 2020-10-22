@@ -12,17 +12,18 @@ parser.add_argument("--input",
 parser.add_argument("--test_only",
                     action="store_true"
                     )
-
-
+parser.add_argument("--func",
+                    default=""
+                    )
 args = parser.parse_args()
-
-input_folder = f"../data_collection/DATA/np_{args.input}_normalised/"
+func = args.func
+input_folder = f"../data_collection/DATA/np_{args.input}_normalised{func}/"
 if args.test_only:
     train_folder = None
 else:
-    train_folder = f"./DATA/{args.input.lower()}_train/"
+    train_folder = f"./DATA/{args.input.lower()}_train{func}/"
 
-test_folder = f"./DATA/{args.input.lower()}_test/"
+test_folder = f"./DATA/{args.input.lower()}_test{func}/"
 test_months = (11, 12)
 
 # make folders
