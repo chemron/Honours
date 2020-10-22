@@ -88,5 +88,8 @@ if len(percentiles) != len(dates):
     print(len(percentiles), len(dates))
     raise Exception("percentiles and dates have different sizes")
 
-np.save(f"DATA/np_objects/{mode}_percentiles", percentiles)
-np.save(f"DATA/np_objects/{mode}_dates", dates)
+percentile_dir = "DATA/np_objects/"
+os.makedirs(percentile_dir) if not os.path.exists(percentile_dir) else None
+
+np.save(f"{percentile_dir}{mode}_percentiles", percentiles)
+np.save(f"{percentile_dir}{mode}_dates", dates)
