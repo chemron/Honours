@@ -79,17 +79,17 @@ for iter in iters:
         x_file = f"{input_test_dir}{x}_{date}.npy"
         y_file = f"{output_test_dir}{y}_{date}.npy" if y is not None else None
         
-        x_arr = (np.load(x_file) * 3000).clip(0, 255).astype('uint8')
+        x_arr = (np.load(x_file) * 255).clip(0, 255).astype('uint8')
         pngs = [Image.fromarray(x_arr)]
 
         if y is not None:
             if os.path.isfile(y_file):
-                y_arr = (np.load(y_file) * 3000 + (255/2)).clip(0, 255)
+                y_arr = ((np.load(y_file) + 1)*(255/2)).clip(0, 255)
                 pngs.append(Image.fromarray(y_arr.astype('uint8')))
         else:
             print(f"File {y_file} does not exist.")
 
-        mag_img = (np.load(mag) * 3000 + (255/2)).clip(0, 255).astype('uint8')
+        mag_img = ((np.load(mag) + 1)*(255/2)).clip(0, 255).astype('uint8')
         pngs.append(Image.fromarray(mag_img))
 
         save_name = f"{save_path}COMBINED_{date}.png"
