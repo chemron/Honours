@@ -15,7 +15,6 @@ import time
 from requests.exceptions import ConnectionError
 from urllib.error import HTTPError
 
-email = 'csmi0005@student.monash.edu'
 
 # can make multiple queries and save the details to files based on the AR and
 # retrieve the data later
@@ -58,7 +57,11 @@ parser.add_argument("--wavelength",
                     type=int,
                     default=[304, 0]
                     )
+parser.add_argument("--email",
+                    default="csmi0005@student.monash.edu")
 args = parser.parse_args()
+
+email = args.email
 
 
 def get_data(name: str, series: str, segment: str, start: str, end: str,
@@ -83,17 +86,17 @@ def get_data(name: str, series: str, segment: str, start: str, end: str,
 
         start = s_time.strftime("%Y-%m-%d %H:%M:%S")
         end = e_time.strftime("%Y-%m-%d %H:%M:%S")
-        args = [a.Time(start, end),
-                a.jsoc.Notify(email),
-                a.jsoc.Series(series),
-                a.jsoc.Segment(segment),
-                a.Sample(12*u.hour)
-                ]
+        arg = [a.Time(start, end),
+               a.jsoc.Notify(email),
+               a.jsoc.Series(series),
+               a.jsoc.Segment(segment),
+               a.Sample(12*u.hour)
+               ]
 
         if wavelength != 0:
-            args.append(a.jsoc.Wavelength(wavelength))
+            arg.append(a.jsoc.Wavelength(wavelength))
 
-        res = Fido.search(*args)
+        res = Fido.search(*arg)
 
         # get response object:
         table = res.tables[0]
@@ -147,11 +150,15 @@ def get_data(name: str, series: str, segment: str, start: str, end: str,
         n_cpus = min(cpu_count(), 8)
         print(f"downloading {len(urls)} files with {n_cpus} cpus.")
         pool = Pool(n_cpus)
-        args = list(zip(urls, filenames))
+        arg = list(zip(urls, filenames))
         try:
-            pool.starmap(download_url, args)
+            pool.starmap(download_url, arg)
         except ConnectionError as e:
             print(e)
+        except HTTPError as e:
+            print(e)
+            print("Could not download:")
+            print(arg)
         pool.close()
         pool.join()
 
@@ -228,32 +235,28 @@ def download_url(url, filename):
 n = len(args.instruments)
 
 for i in range(n):
-    try:
-        # date string format
-        if args.instruments[i] == "AIA":
-            fmt = "%Y-%m-%dT%H:%M:%SZ"
-        elif args.instruments[i] == "HMI":
-            fmt = '%Y.%m.%d_%H:%M:%S_TAI'
-        else:
-            raise Exception("Only accepts AIA or HMI instrument")
+    # date string format
+    if args.instruments[i] == "AIA":
+        fmt = "%Y-%m-%dT%H:%M:%SZ"
+    elif args.instruments[i] == "HMI":
+        fmt = '%Y.%m.%d_%H:%M:%S_TAI'
+    else:
+        raise Exception("Only accepts AIA or HMI instrument")
 
-        print(args.instruments[i],
-              args.segment[i],
-              args.series[i],
-              args.start,
-              args.end,
-              args.cadence,
-              args.wavelength[i],
-              args.path)
-        get_data(name=args.instruments[i],
-                 segment=args.segment[i],
-                 series=args.series[i],
-                 start=args.start,
-                 end=args.end,
-                 cadence=args.cadence,
-                 wavelength=args.wavelength[i],
-                 path=args.path,
-                 fmt=fmt)
-    except HTTPError as e:
-        print(e)
-        pass
+    print(args.instruments[i],
+          args.segment[i],
+          args.series[i],
+          args.start,
+          args.end,
+          args.cadence,
+          args.wavelength[i],
+          args.path)
+    get_data(name=args.instruments[i],
+             segment=args.segment[i],
+             series=args.series[i],
+             start=args.start,
+             end=args.end,
+             cadence=args.cadence,
+             wavelength=args.wavelength[i],
+             path=args.path,
+             fmt=fmt)
