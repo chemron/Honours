@@ -40,7 +40,7 @@ just_plot = args.just_plot
 w = h = 1024  # desired width and height of output
 
 # plot percentiles vs dates
-fig, axs = plt.subplots(4, 1, figsize=(10, 12), sharex=True)
+fig, axs = plt.subplots(5, 1, figsize=(10, 12), sharex=True)
 
 # cameron factor
 cam_factor = percentiles[7]*15
@@ -97,12 +97,14 @@ if args.cam:
                      c='k'
                      )
 
-# clip_max = np.max(normal_percentiles[-1][:50])
+clip_max = np.max(normal_percentiles[-1][:50])
 # use the average 99.99th percentile
-clip_max = np.average(normal_percentiles[-2])
+# clip_max = np.average(normal_percentiles[-2])
 print(clip_max)
 normal_percentiles = normal_percentiles.clip(None, clip_max)
 cam_normal = cam_normal.clip(None, clip_max)
+
+normal_percentiles = normal_percentiles/clip_max
 
 for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
     axs[3].plot_date(datetime_dates, normal_percentiles[i],
@@ -114,26 +116,38 @@ if args.cam:
                      c='k',
                      markersize=1)
 
+
+normal_percentiles = np.sign(normal_percentiles) * \
+                      (np.abs(normal_percentiles)**(1/3))
+
+
+for i in range(len(percentiles)-1, - 1, -1):
+    axs[4].plot_date(datetime_dates, normal_percentiles[i],
+                     label=f'${q[i]}$th percentile',
+                     markersize=1)
+
+
 axs[0].set_ylabel("Pixel Intensity")
 axs[1].set_ylabel("Pixel Intensity")
 
 if args.log:
     axs[2].set_ylabel("Pixel Intensity (log scale)")
-    axs[3].set_ylabel("Pixel Intensity (log scale)")
     axs[2].set_yscale('log')
-    # axs[3].set_yscale('log')
 else:
     axs[2].set_ylabel("Pixel Intensity")
-    axs[3].set_ylabel("Pixel Intensity")
+
+axs[3].set_ylabel("Pixel Intensity")
+axs[4].set_ylabel("Pixel Intensity")
+axs[4].set_ylim(0, 1)
 
 # GET TICkS
 rule = rrulewrapper(MONTHLY, interval=6)
 loc = RRuleLocator(rule)
-axs[3].xaxis.set_major_locator(loc)
+axs[-1].xaxis.set_major_locator(loc)
 formatter = DateFormatter('%m/%y')
-axs[3].xaxis.set_major_formatter(formatter)
-axs[3].xaxis.set_tick_params(rotation=30, labelsize=10)
-axs[3].set_xlabel("Date")
+axs[-1].xaxis.set_major_formatter(formatter)
+axs[-1].xaxis.set_tick_params(rotation=30, labelsize=10)
+axs[-1].set_xlabel("Date")
 
 for ax in axs:
     # Put a legend to the right of the current axis
@@ -167,6 +181,7 @@ if not just_plot:
         img = np.load(filename)
         img = img/divider
         img = img.clip(0, 1)
+        img = np.sign(img) * (np.abs(img) ** (1/3))
         try:
             img = cv2.resize(img, dsize=(w, h))
             np.save(normal_np_dir + name, img)

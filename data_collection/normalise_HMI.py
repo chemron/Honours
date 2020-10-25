@@ -56,14 +56,17 @@ abs_min = abs(np.min(percentiles[0]))
 
 print(f"Absolute max: {abs_max}, Absolute min: {abs_min}")
 
-# clip_max = np.max([abs_max, -abs_min])
+clip_max = np.max([abs_max, -abs_min])
 # use 99th percentile:
-clip_max = np.average(percentiles[-2])
+# clip_max = np.average(percentiles[-2])
 print(clip_max)
 
 clipped_percentiles = percentiles.clip(-clip_max, clip_max)
 clipped_percentiles = clipped_percentiles/clip_max
 clipped_cam = cam_factor/clip_max
+
+clipped_percentiles = np.sign(clipped_percentiles) * \
+                      (np.abs(clipped_percentiles)**(1/3))
 
 for i in range(len(percentiles)-1, - 1, -1):
     axs[1].plot_date(datetime_dates, clipped_percentiles[i],
@@ -81,11 +84,11 @@ axs[1].set_ylabel("Normalised magnetic field strength")
 # GET TICkS
 rule = rrulewrapper(MONTHLY, interval=6)
 loc = RRuleLocator(rule)
-axs[1].xaxis.set_major_locator(loc)
+axs[-1].xaxis.set_major_locator(loc)
 formatter = DateFormatter('%m/%y')
-axs[1].xaxis.set_major_formatter(formatter)
-axs[1].xaxis.set_tick_params(rotation=30, labelsize=10)
-axs[1].set_xlabel("Date")
+axs[-1].xaxis.set_major_formatter(formatter)
+axs[-1].xaxis.set_tick_params(rotation=30, labelsize=10)
+axs[-1].set_xlabel("Date")
 
 for ax in axs:
     # Put a legend to the right of the current axis
@@ -112,6 +115,7 @@ if not just_plot:
         img = np.load(filename)
         img = img/clip_max
         img = img.clip(-1, 1)
+        img = np.sign(img) * (np.abs(img) ** (1/3))
         try:
             img = cv2.resize(img, dsize=(w, h))
             np.save(normal_np_dir + name, img)
