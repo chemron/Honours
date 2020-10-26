@@ -18,6 +18,9 @@ parser.add_argument("--output",
                     type=str,
                     default=None
                     )
+parser.add_argument("--func",
+                    default=""
+                    )
 args = parser.parse_args()
 
 x = args.input  # test input
@@ -25,15 +28,15 @@ y = args.output  # test output
 g = "MAG"  # generator output
 model = args.model_name
 
-input_test_dir = f"DATA/{x.lower()}_test/"
-output_test_dir = f"DATA/{y.lower()}_test/" if y is not None else None
+input_test_dir = f"DATA/{x.lower()}_test{args.func}/"
+output_test_dir = f"DATA/{y.lower()}_test{args.func}/" if y is not None \
+    else None
 result_dir = f"RESULTS/{model}/{x}_to_{g}/"
 
 png_dir = f"RESULTS/{model}/{x}_to_{g}_PNG/"
 
-iters = np.sort(os.listdir(result_dir))
-# just use 200000
-iters = [iters[-1]]
+iters = np.sort(os.listdir(result_dir))[::-1]
+
 print(iters)
 
 
@@ -78,7 +81,7 @@ for iter in iters:
         # input file of gan with same date
         x_file = f"{input_test_dir}{x}_{date}.npy"
         y_file = f"{output_test_dir}{y}_{date}.npy" if y is not None else None
-        
+
         x_arr = (np.load(x_file) * 255).clip(0, 255).astype('uint8')
         pngs = [Image.fromarray(x_arr)]
 

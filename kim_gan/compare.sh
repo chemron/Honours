@@ -2,7 +2,8 @@
 #     --model_name 'P100_2' \
 #     --input "AIA" \
 #     --output "HMI"
-python mag_vs_hmi.py \
-    --model_name 'P100_99.99p' \
+time python mag_vs_hmi.py \
+    --model_name 'P100_cube_root' \
     --input "AIA" \
-    --output "HMI"
+    --output "HMI" \
+    --func "_cube_root"

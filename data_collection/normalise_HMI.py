@@ -19,12 +19,15 @@ parser.add_argument("--just_plot",
 parser.add_argument("--cam",
                     action="store_true",
                     )
+parser.add_argument("--func",
+                    default="",
+                    )
 args = parser.parse_args()
 mode = args.data
 
 
 np_dir = f"DATA/np_{mode}/"
-normal_np_dir = f"DATA/np_{mode}_normalised/"
+normal_np_dir = f"DATA/np_{mode}_normalised{args.func}/"
 os.makedirs(normal_np_dir) if not os.path.exists(normal_np_dir) else None
 
 percentiles = np.load(f"DATA/np_objects/{mode}_percentiles.npy").T
@@ -66,7 +69,7 @@ clipped_percentiles = clipped_percentiles/clip_max
 clipped_cam = cam_factor/clip_max
 
 clipped_percentiles = np.sign(clipped_percentiles) * \
-                      (np.abs(clipped_percentiles)**(1/3))
+                      (np.abs(clipped_percentiles)**(1/2))
 
 for i in range(len(percentiles)-1, - 1, -1):
     axs[1].plot_date(datetime_dates, clipped_percentiles[i],
@@ -98,10 +101,12 @@ for ax in axs:
 
 plt.tight_layout()
 if args.cam:
-    fig.savefig(f"percentile_plots/Cam_{mode}_normalising_percentiles.png",
+    fig.savefig(f"percentile_plots/Cam_{mode}_normalising_percentiles"
+                f"{args.func}.png",
                 bbox_inches='tight')
 else:
-    fig.savefig(f"percentile_plots/{mode}_normalising_percentiles.png",
+    fig.savefig(f"percentile_plots/{mode}_normalising_percentiles"
+                f"{args.func}.png",
                 bbox_inches='tight')
 
 # normalise data
@@ -115,7 +120,7 @@ if not just_plot:
         img = np.load(filename)
         img = img/clip_max
         img = img.clip(-1, 1)
-        img = np.sign(img) * (np.abs(img) ** (1/3))
+        img = np.sign(img) * (np.abs(img) ** (1/2))
         try:
             img = cv2.resize(img, dsize=(w, h))
             np.save(normal_np_dir + name, img)

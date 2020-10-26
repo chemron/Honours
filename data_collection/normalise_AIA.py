@@ -22,13 +22,16 @@ parser.add_argument("--just_plot",
 parser.add_argument("--cam",
                     action="store_true",
                     )
+parser.add_argument("--func",
+                    default="",
+                    )
 args = parser.parse_args()
 mode = args.data
 
 # moving average over 50 images
 n = 50
 np_dir = f"DATA/np_{mode}/"
-normal_np_dir = f"DATA/np_{mode}_normalised/"
+normal_np_dir = f"DATA/np_{mode}_normalised{args.func}/"
 os.makedirs(normal_np_dir) if not os.path.exists(normal_np_dir) else None
 
 percentiles = np.load(f"DATA/np_objects/{mode}_percentiles.npy").T
@@ -118,7 +121,7 @@ if args.cam:
 
 
 normal_percentiles = np.sign(normal_percentiles) * \
-                      (np.abs(normal_percentiles)**(1/3))
+                      (np.abs(normal_percentiles)**(1/2))
 
 
 for i in range(len(percentiles)-1, - 1, -1):
@@ -157,10 +160,12 @@ for ax in axs:
 
 plt.tight_layout()
 if args.cam:
-    fig.savefig(f"percentile_plots/cam_{mode}_normalising_percentiles.png",
+    fig.savefig(f"percentile_plots/cam_{mode}_normalising_percentiles"
+                f"{args.func}.png",
                 bbox_inches='tight')
 else:
-    fig.savefig(f"percentile_plots/{mode}_normalising_percentiles.png",
+    fig.savefig(f"percentile_plots/{mode}_normalising_percentiles.png"
+                f"{args.func}",
                 bbox_inches='tight')
 
 
@@ -181,7 +186,7 @@ if not just_plot:
         img = np.load(filename)
         img = img/divider
         img = img.clip(0, 1)
-        img = np.sign(img) * (np.abs(img) ** (1/3))
+        img = np.sign(img) * (np.abs(img) ** (1/2))
         try:
             img = cv2.resize(img, dsize=(w, h))
             np.save(normal_np_dir + name, img)
