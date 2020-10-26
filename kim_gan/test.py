@@ -48,6 +48,9 @@ parser.add_argument("--input",
                     type=str,
                     default="AIA"
                     )
+parser.add_argument("--func",
+                    default=""
+                    )
 args = parser.parse_args()
 
 
@@ -62,7 +65,7 @@ OP1 = f'{INPUT.upper()}_to_{OUTPUT}'
 
 TRIAL_NAME = args.model_name
 
-TEST_PATH = f'./DATA/{INPUT.lower()}_test/*.npy'
+TEST_PATH = f'./DATA/{INPUT.lower()}_test{args.func}/*.npy'
 
 ISIZE = 1024  # input size
 NC_IN = 1  # number of channels in the output

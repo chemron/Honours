@@ -55,6 +55,9 @@ parser.add_argument("--max_iter",
                     type=int,
                     default=500000
                     )
+parser.add_argument("--func",
+                    default=""
+                    )
 args = parser.parse_args()
 
 # Hyper parameters
@@ -82,8 +85,8 @@ TRIAL_NAME = args.model_name
 
 MODE = INPUT_DATA + '_to_' + OUTPUT_DATA  # folder name for saving the model
 
-IMAGE_PATH_INPUT = './DATA/aia_train/*'  # input file path
-IMAGE_PATH_OUTPUT = './DATA/hmi_train/*'  # ouptut file path
+IMAGE_PATH_INPUT = f'./DATA/aia_train{args.func}/*'  # input file path
+IMAGE_PATH_OUTPUT = f'./DATA/hmi_train{args.func}/*'  # ouptut file path
 
 # make a folder for the trial if it doesn't already exist
 MODEL_PATH_MAIN = './MODELS/' + TRIAL_NAME + '/'

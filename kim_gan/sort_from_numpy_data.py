@@ -17,7 +17,7 @@ parser.add_argument("--func",
                     )
 args = parser.parse_args()
 func = args.func
-input_folder = f"../data_collection/DATA/np_{args.input}_normalised{func}/"
+input_folder = f"../data_collection/DATA/np_{args.input}_normalised/"  # {func}/"
 if args.test_only:
     train_folder = None
 else:
