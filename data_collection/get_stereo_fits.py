@@ -1,146 +1,142 @@
-#!/usr/bin/env python3
-# Python code for retrieving HMI and AIA data
 from sunpy.net import Fido, attrs as a
 
-# these are needed to slice the data how I want
+from datetime import datetime, timedelta
+import astropy.units as u  # for AIA
+import argparse
+import numpy as np
+import os
+
 from sunpy.net.fido_factory import UnifiedResponse
 from sunpy.net.vso.vso import QueryResponse
 
-import astropy.units as u  # for AIA
-import os
-import argparse
-from datetime import datetime, timedelta
-import numpy as np
-
-# TODO: do many short queryies rather than one large one
-email = 'csmi0005@student.monash.edu'
-# can make multiple queries and save the details to files based on the AR and
-# retrieve the data later
-
 parser = argparse.ArgumentParser()
-parser.add_argument("--path",
-                    help="directory to store STEREO data",
-                    default='./FITS_DATA/STEREO'
-                    )
 parser.add_argument("--start",
-                    help="start time for STEREO (yyyy-mm-dd hh:mm:ss)",
-                    default='2011-01-01 00:00:00')
+                    help="start date",
+                    default='2010-06-01 00:00:00')
 parser.add_argument("--end",
-                    help="end date for STEREO (yyyy-mm-dd hh:mm:ss)",
-                    default='2017-01-01 00:00:00')
-
-parser.add_argument("--wavelength",
-                    help="wavelength of images in angstroms",
+                    help="end date",
+                    default='2020-01-01 00:00:00')
+parser.add_argument("--cadence",
                     type=int,
-                    default=304
+                    default=12
                     )
-parser.add_argument("--times",
-                    help="path to times file",
-                    default="./DATA/phase_stereo_times.txt"
+parser.add_argument("--path",
+                    help="directory to store data",
+                    default='./DATA/'
                     )
+parser.add_argument("--email",
+                    default="csmi0005@student.monash.edu")
 args = parser.parse_args()
 
-print(args)
-# query duration:
-STEREO_start = args.start
-STEREO_end = args.end
-times = args.times
-STEREO_path = args.path
-wavelength = args.wavelength*u.AA  # wavelength in angstroms
+start = args.start
+end = args.end
+cadence = args.cadence
+email = args.email
+
+wavelength = 304*u.AA
+source = 'STEREO_A'
+instrument = 'EUVI'
+path = f"{args.path}fits_STEREO/"
+os.makedirs(path) if not os.path.exists(path) else None
+cadence = timedelta(hours=cadence)
+fmt = "%Y-%m-%d %H:%M:%S"
+
+# start time for downloading
+s_time = datetime.fromisoformat(start)
+# time of end of downloading
+f_time = datetime.fromisoformat(end)
+# take data from 10 days at a time
+step_time = timedelta(days=8)
+# time of end of this step:
+e_time = s_time + step_time
+# time between searches
 
 
-STEREO_start_date = datetime.fromisoformat(STEREO_start)
-STEREO_end_date = datetime.fromisoformat(STEREO_end)
-os.makedirs(STEREO_path) if not os.path.exists(STEREO_path) else None
+def get_index(times, start: datetime, end: datetime, cadence: timedelta):
+    # get index and dates of every cadence timestep in times
+    index = []
+    dates = []
+    # current time:
+    current = start
 
-# load phase and stereo times
-phase_times, stereo_times = np.loadtxt(times, dtype=str).T
+    i = 0
+    while i < len(times):
+        # previous time in times
+        p_time = times[i-1]
+        # current time in times
+        time = times[i]
+        if time > current:
+            # if the previous time was closer to current:
+            if abs(current - p_time) < abs(current - time):
+                time = p_time
+                i = i - 1
+            # add the time to the index if close enough
+            if (time - current) < timedelta(hours=2):
+                index.append(i)
+                dates.append(time)
+            current += cadence
+        i += 1
 
-phase_times = np.array([datetime.strptime(time, "%Y.%m.%d_%H:%M:%S")
-                       for time in phase_times
-                        ])
+    return index, dates
 
 
-stereo_times = np.array([datetime.strptime(time, "%Y.%m.%d_%H:%M:%S")
-                        for time in stereo_times
-                         ])
-
-STEREO = True
-# index of stereo and phase times
-i = 0
-
-step = timedelta(days=20)
-
-
-while STEREO:
-    search_end = STEREO_start_date + step
-    if search_end > STEREO_end_date:
-        search_end = STEREO_end
-        STEREO = False
-
-    search_end_date = search_end.strftime("%Y-%m-%d %H:%M:%S")
+while True:
+    if e_time > f_time:
+        e_time = f_time
     
-    print(STEREO_start, search_end_date)
-    args = [a.Wavelength(wavelength),
-            a.vso.Source('STEREO_A'),
-            a.Instrument('EUVI'),
-            a.Time(STEREO_start, STEREO_end)]
+    print(f"getting data between {s_time} and {e_time}")
 
-    print(args)
+    start = s_time.strftime("%Y-%m-%d %H:%M:%S")
+    end = e_time.strftime("%Y-%m-%d %H:%M:%S")
 
-    res_stereo = Fido.search(*args)
+    arg = [a.Wavelength(wavelength),
+           a.vso.Source(source),
+           a.Instrument(instrument),
+           a.Time(start, end),
+           a.Sample(12*u.hour)
+           ]
 
-    print(res_stereo)
-    # put results into qtable
-    table = res_stereo.tables[0]
+    res = Fido.search(*arg)
+    # get response object:
+    table = res.tables[0]
 
     # get time string of final end time of results
     if len(table) == 0:
-        print("Empty table")
-        if STEREO_start_date > STEREO_end_date:
+        print(f"{s_time} to {e_time}: Empty table")
+        if e_time >= f_time:
+            print("finish on empty table")
             break
         else:
-            STEREO_start_date = search_end_date
-            STEREO_start = STEREO_start_date.strftime("%Y-%m-%d %H:%M:%S")
+            s_time = e_time
+            e_time += step_time
             continue
 
-    # original unified responce object
-    UR = res_stereo.get_response(0)
-    # blocks (list of the data)
-    blocks = UR._data
-
-    # slice list how I need:
-
-    times = np.array([datetime.fromisoformat(time[0])
-                     for time in table["Start Time"]])
-    # index of table:
-    j = 0
-
-    # the indexes of the stereo data to download
-    indicies = []
-    while j < len(times):
-        if times[j] > stereo_times[i]:
-            if (times[j] - stereo_times[i]) < timedelta(hours=2):
-                indicies += [j]
-                j += 1
-            i += 1
+    times = []
+    for t in table["Start Time"]:
+        t = t[0]
+        # account for leap second in 2016
+        if t == "2016-12-31 23:59:60":
+            time = "2017-01-01 00:00:00"
         else:
-            j += 1
+            time = t
+        times.append(datetime.strptime(time, fmt))
+    times = np.array(times)
 
-    blocks = [blocks[k] for k in indicies]
+    index, dates = get_index(times, s_time, e_time, cadence)
+    # get response
+    vso_response = list(res.responses)[0]
+    block = vso_response._data
 
-    # build responce object
-    q = QueryResponse(blocks)
+    block = [block[k] for k in index]
+
+    q = QueryResponse(block)
     # build unified responce object from sliced query responce
     UR = UnifiedResponse(q)
+    print(UR)
+    downloaded_files = Fido.fetch(UR, path=path, progress=False)
 
-    # start of next run:
-    end = table['End Time'][-1][0]
-    STEREO_start_date = datetime.fromisoformat(end) + timedelta(hours=6)
-    STEREO_start = STEREO_start_date.strftime("%Y-%m-%d %H:%M:%S")
-    # if we get to the end of results:
-    if STEREO_start_date >= STEREO_end_date:
-        STEREO = False
+    s_time = e_time + cadence
+    if s_time > f_time:
+        break
+    e_time = s_time + step_time
 
-    # Finally, download the data
-    downloaded_files = Fido.fetch(UR, path=STEREO_path)

@@ -2,7 +2,7 @@ import numpy as np
 # import matplotlib.pyplot as plt
 import os
 from datetime import datetime, timedelta
-
+import urllib.request  # the lib that handles the url stuff
 
 # combine all stereo data into array: data
 start_date = datetime(2010, 4, 25)
@@ -10,11 +10,18 @@ start_date = datetime(2010, 4, 25)
 end_date = datetime(2020, 8, 3)
 
 
-folder = "DATA/stereo_pos_data/"
+folder = "DATA/np_objects/"
+os.makedirs(folder) if not os.path.exists(folder) else None
 data = np.array([], dtype=float).reshape(0, 7)
-for fname in np.sort(os.listdir(folder)):
-    new_data = np.loadtxt(f"{folder}{fname}", dtype=float)
+
+for year in range(2010, 2020):
+    print(f"Getting data from {year}")
+    url = f"http://www.srl.caltech.edu/STEREO2/Position/ahead/" \
+          f"position_ahead_{year}_HEEQ.txt"
+    response = urllib.request.urlopen(url)
+    new_data = np.loadtxt(response)
     data = np.concatenate((data, new_data))
+
 
 """
 year: yyyy
@@ -57,19 +64,9 @@ dt = timedelta(hours=12)
 # index for moving through phase and stereo time arrays
 i = 0
 
-f = open("DATA/phase_stereo_times.txt", "w")
-while date < end_date:
-    while phase_time[i] < date:
-        i += 1
-    if (phase_time[i] - date) < (date - phase_time[i-1]):
-        j = i
-    else:
-        j = i-1
-    f.write(phase_time[j].strftime("%Y.%m.%d_%H:%M:%S") +
-            " " +
-            stereo_time[j].strftime("%Y.%m.%d_%H:%M:%S") +
-            "\n")
-    date += dt
+phase_stereo_times = np.stack([phase_time, stereo_time], axis=1)
+np.save(f"{folder}phase_stereo_times", phase_stereo_times)
+
 
 # # convert to string:
 # phase_time = np.array([time.strftime("%Y.%m.%d_%H:%M:%S")
@@ -89,4 +86,12 @@ while date < end_date:
 # ax.set_xlim(-1.5e8, 1.5e8)
 # ax.set_ylim(-1.5e8, 1.5e8)
 # ax.plot(data[-3], data[-2])
+# plt.show()
+
+# time_differences = [x.total_seconds()/3600 for x in (phase_time-stereo_time)]
+# plt.plot_date(phase_time[::20], time_differences[::20],
+# markersize=1)
+# plt.xlabel("Year")
+# plt.ylabel("Time difference (Hours) of an observation")
+# plt.title("Stereo position vs the Farside of the Sun")
 # plt.show()
