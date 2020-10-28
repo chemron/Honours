@@ -11,7 +11,7 @@ from sunpy.net.vso.vso import QueryResponse
 parser = argparse.ArgumentParser()
 parser.add_argument("--start",
                     help="start date",
-                    default='2010-01-01 00:00:00')
+                    default='2010-01-11 00:00:00')
 parser.add_argument("--end",
                     help="end date",
                     default='2020-01-01 00:00:00')
@@ -93,8 +93,6 @@ while True:
     if e_time > f_time:
         e_time = f_time
 
-    print(f"getting data between {s_time} and {e_time}")
-
     phase_times = []
     t = s_time
     while t < e_time:
@@ -110,6 +108,8 @@ while True:
 
     stereo_start = stereo_s_time.strftime("%Y-%m-%d %H:%M:%S")
     stereo_end = stereo_e_time.strftime("%Y-%m-%d %H:%M:%S")
+
+    print(f"getting data between {stereo_start} and {stereo_end}")
 
     arg = [a.Wavelength(wavelength),
            a.vso.Source(source),
