@@ -1,9 +1,8 @@
 from sunpy.net import Fido, attrs as a
-
+from get_equivalent_time import get_stereo_time
 from datetime import datetime, timedelta
 import astropy.units as u  # for AIA
 import argparse
-import numpy as np
 import os
 
 from sunpy.net.fido_factory import UnifiedResponse
@@ -12,7 +11,7 @@ from sunpy.net.vso.vso import QueryResponse
 parser = argparse.ArgumentParser()
 parser.add_argument("--start",
                     help="start date",
-                    default='2010-06-01 00:00:00')
+                    default='2010-01-01 00:00:00')
 parser.add_argument("--end",
                     help="end date",
                     default='2020-01-01 00:00:00')
@@ -45,56 +44,77 @@ fmt = "%Y-%m-%d %H:%M:%S"
 s_time = datetime.fromisoformat(start)
 # time of end of downloading
 f_time = datetime.fromisoformat(end)
-# take data from 10 days at a time
+# take data from 8 days at a time
 step_time = timedelta(days=8)
 # time of end of this step:
 e_time = s_time + step_time
 # time between searches
 
 
-def get_index(times, start: datetime, end: datetime, cadence: timedelta):
-    # get index and dates of every cadence timestep in times
+def get_index(all_times, stereo_times):
     index = []
-    dates = []
-    # current time:
-    current = start
 
-    i = 0
-    while i < len(times):
-        # previous time in times
-        p_time = times[i-1]
-        # current time in times
-        time = times[i]
-        if time > current:
+    # index for all_times
+    a_i = 0
+    # index for stereo times
+    s_i = 0
+
+    # current all time:
+    a_time = all_times[a_i]
+
+    while a_i < len(all_times) and s_i < len(stereo_times):
+
+        # stereo time:
+        s_time = stereo_times[s_i]
+
+        # previous and current all times
+        p_time, a_time = a_time, all_times[a_i]
+
+        if a_time == s_time:
+            index.append(a_i)
+            s_i += 1
+            a_i += 1
+
+        elif (a_time > s_time) or (a_i == len(all_times) - 1):
             # if the previous time was closer to current:
-            if abs(current - p_time) < abs(current - time):
-                time = p_time
-                i = i - 1
-            # add the time to the index if close enough
-            if (time - current) < timedelta(hours=2):
-                index.append(i)
-                dates.append(time)
-            current += cadence
-        i += 1
+            if abs(s_time - p_time) < abs(s_time - a_time):
+                a_time = p_time
+                a_i = a_i-1
+            if abs(s_time - a_time) <= timedelta(hours=1):
+                index.append(a_i)
+            s_i += 1
 
-    return index, dates
+        a_i += 1
+
+    return index
 
 
 while True:
     if e_time > f_time:
         e_time = f_time
-    
+
     print(f"getting data between {s_time} and {e_time}")
 
-    start = s_time.strftime("%Y-%m-%d %H:%M:%S")
-    end = e_time.strftime("%Y-%m-%d %H:%M:%S")
+    phase_times = []
+    t = s_time
+    while t < e_time:
+        phase_times.append(t)
+        t += timedelta(hours=12)
+
+    stereo_times = list(map(get_stereo_time, phase_times))
+
+    # start time of stereo
+    stereo_s_time = stereo_times[0]
+    # end time of stereo
+    stereo_e_time = stereo_times[-1]
+
+    stereo_start = stereo_s_time.strftime("%Y-%m-%d %H:%M:%S")
+    stereo_end = stereo_e_time.strftime("%Y-%m-%d %H:%M:%S")
 
     arg = [a.Wavelength(wavelength),
            a.vso.Source(source),
            a.Instrument(instrument),
-           a.Time(start, end),
-           a.Sample(12*u.hour)
-           ]
+           a.Time(stereo_start, stereo_end)]
 
     res = Fido.search(*arg)
     # get response object:
@@ -111,7 +131,7 @@ while True:
             e_time += step_time
             continue
 
-    times = []
+    all_times = []
     for t in table["Start Time"]:
         t = t[0]
         # account for leap second in 2016
@@ -119,10 +139,10 @@ while True:
             time = "2017-01-01 00:00:00"
         else:
             time = t
-        times.append(datetime.strptime(time, fmt))
-    times = np.array(times)
+        all_times.append(datetime.strptime(time, fmt))
 
-    index, dates = get_index(times, s_time, e_time, cadence)
+    index = get_index(all_times, stereo_times)
+
     # get response
     vso_response = list(res.responses)[0]
     block = vso_response._data
@@ -135,8 +155,7 @@ while True:
     print(UR)
     downloaded_files = Fido.fetch(UR, path=path, progress=False)
 
-    s_time = e_time + cadence
-    if s_time > f_time:
+    s_time = e_time
+    if s_time == f_time:
         break
     e_time = s_time + step_time
-
