@@ -6,40 +6,33 @@ from matplotlib.dates import (MONTHLY, DateFormatter,
 plt.switch_backend('agg')
 
 q = [0, 0.01, 0.1, 1, 5, 10, 25, 50, 75, 90, 95, 99, 99.9, 99.99, 100]
-percentiles = np.load("DATA/stereo_percentiles.npy").T
-dates = np.load("DATA/stereo_dates.npy")
-plt_dates = [datetime.strptime(date, "%Y%m%d%H%M%S") for date in dates]
+percentiles = np.load("DATA/np_objects/STEREO_percentiles.npy").T
+dates = np.load("DATA/np_objects/STEREO_dates.npy")
+plt_dates = [datetime.strptime(date[0] + date[1], "%Y%m%d%H%M%S") for date in dates]
 
 # plot percentiles vs dates
-fig, axs = plt.subplots(2, 1, figsize=(12, 8), sharex=True)
+fig, ax = plt.subplots(1, 1, figsize=(12, 8), sharex=True)
 for i in range(len(percentiles)-1, -1, -1):
-    axs[0].plot_date(plt_dates, percentiles[i] - 725,
-                     label=f'${q[i]}$th percentile',
-                     markersize=1)
-for i in range(6, -1, -1):
-    axs[1].plot_date(plt_dates, percentiles[i] - 725,
+    ax.plot_date(plt_dates, percentiles[i] - 725,
                      label=f'${q[i]}$th percentile',
                      markersize=1)
 
-
-axs[1].set_ylabel("Pixel Intensity")
-axs[1].set_ylim(-20, 5)
+ax.set_yscale('log')
+ax.set_ylim(0.1, 20000)
 
 # GET TICkS
 rule = rrulewrapper(MONTHLY, interval=6)
 loc = RRuleLocator(rule)
-axs[1].xaxis.set_major_locator(loc)
+ax.xaxis.set_major_locator(loc)
 formatter = DateFormatter('%m/%y')
-axs[1].xaxis.set_major_formatter(formatter)
-axs[1].xaxis.set_tick_params(rotation=30, labelsize=10)
-axs[1].set_xlabel("Date")
+ax.xaxis.set_major_formatter(formatter)
+ax.xaxis.set_tick_params(rotation=30, labelsize=10)
+ax.set_xlabel("Date")
 
-for ax in axs:
-    # Put a legend to the right of the current axis
-    box = ax.get_position()
-    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-    ax.set_adjustable('box-forced')
+box = ax.get_position()
+ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+ax.set_adjustable('box-forced')
 
 plt.tight_layout()
-fig.savefig("stereo_percentiles.png", bbox_inches='tight')
+fig.savefig("percentile_plots/STEREO_percentiles.png", bbox_inches='tight')

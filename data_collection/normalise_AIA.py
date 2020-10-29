@@ -36,6 +36,9 @@ os.makedirs(normal_np_dir) if not os.path.exists(normal_np_dir) else None
 
 percentiles = np.load(f"DATA/np_objects/{mode}_percentiles.npy").T
 dates = np.load(f"DATA/np_objects/{mode}_dates.npy")
+if mode == "STEREO":
+    dates = np.apply_along_axis(lambda d: d[0] + d[1], 1, dates)
+
 datetime_dates = [datetime.strptime(date, "%Y%m%d%H%M%S")
                   for date in dates]
 # don't normalise data, just plot percentiles:
