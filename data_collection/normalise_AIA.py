@@ -25,6 +25,9 @@ parser.add_argument("--cam",
 parser.add_argument("--func",
                     default="",
                     )
+parser.add_argument("--get_min_max",
+                    action="store_true",
+                    )
 args = parser.parse_args()
 mode = args.data
 
@@ -129,7 +132,6 @@ normal_percentiles = np.sign(normal_percentiles) * \
 
 for i in range(len(percentiles)-1, - 1, -1):
     axs[4].plot_date(datetime_dates, normal_percentiles[i],
-                     label=f'${q[i]}$th percentile',
                      markersize=1)
 
 
@@ -178,6 +180,25 @@ data = np.delete(data, outlier_indicies)
 data = data[n//2-1:-n//2]
 
 print(len(data), len(rolling_75p))
+if args.get_min_max:
+    from scipy.stats import percentileofscore
+    minp = []
+    maxp = []
+
+    for i in range(len(data)):
+        name = data[i]
+        max_value = rolling_75p[i]*clip_max
+        filename = np_dir + name
+        img = np.load(filename).flatten()
+        lower_p = percentileofscore(img, 0)
+        upper_p = percentileofscore(img, max_value)
+        print(f"{name}, lower: {lower_p}, upper: {upper_p}")
+        minp.append(lower_p)
+        maxp.append(upper_p)
+
+    np.save(f"DATA/np_objects/{mode}_minp", np.array(minp))
+    np.save(f"DATA/np_objects/{mode}_maxp", np.array(maxp))
+
 
 if not just_plot:
     import cv2

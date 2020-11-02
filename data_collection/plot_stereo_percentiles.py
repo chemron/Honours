@@ -13,12 +13,12 @@ plt_dates = [datetime.strptime(date[0] + date[1], "%Y%m%d%H%M%S") for date in da
 # plot percentiles vs dates
 fig, ax = plt.subplots(1, 1, figsize=(12, 8), sharex=True)
 for i in range(len(percentiles)-1, -1, -1):
-    ax.plot_date(plt_dates, percentiles[i] - 725,
-                     label=f'${q[i]}$th percentile',
-                     markersize=1)
+    ax.plot_date(plt_dates, percentiles[i],
+                 label=f'${q[i]}$th percentile',
+                 markersize=1)
 
 ax.set_yscale('log')
-ax.set_ylim(0.1, 20000)
+ax.set_ylim(500, 17500)
 
 # GET TICkS
 rule = rrulewrapper(MONTHLY, interval=6)
