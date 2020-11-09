@@ -185,7 +185,7 @@ if args.get_min_max:
     minp = []
     maxp = []
 
-    for i in range(len(data)):
+    for i in range(len(data) - 1):
         name = data[i]
         max_value = rolling_75p[i]*clip_max
         filename = np_dir + name

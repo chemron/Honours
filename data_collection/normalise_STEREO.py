@@ -42,35 +42,74 @@ datetime_dates = [datetime.strptime(date, "%Y%m%d%H%M%S")
 just_plot = args.just_plot
 w = h = 1024  # desired width and height of output
 
+n_ax = 6
+current_ax = 0
 # plot percentiles vs dates
-fig, axs = plt.subplots(5, 1, figsize=(10, 12), sharex=True)
+fig, axs = plt.subplots(n_ax, 1, figsize=(10, 12), sharex=True)
+q = [0, 0.01, 0.1, 1, 5, 10, 25, 50, 75, 90, 95, 99, 99.9, 99.99, 100]
 
+# raw percentiles
+
+for i in range(len(percentiles)-1, -1, -1):
+    axs[current_ax].plot_date(datetime_dates, percentiles[i],
+                              label=f'${q[i]}$th percentile',
+                              markersize=1)
+
+# axs[current_ax].set_yscale('log')
+axs[current_ax].set_ylim(500, 17500)
+
+# next ax:
+current_ax += 1
+
+# zero point
+zero_point = np.load("DATA/np_objects/STEREO_zeros.npy")
+zero_point = np.average(zero_point)
+zero_point = int(np.round(zero_point))
+
+percentiles -= zero_point
+
+
+# shifted percentiles
+
+
+for i in range(len(percentiles)-1, -1, -1):
+    axs[current_ax].plot_date(datetime_dates, percentiles[i],
+                              label=f'${q[i]}$th percentile',
+                              markersize=1)
+
+# axs[current_ax].set_yscale('log')
+axs[current_ax].set_ylim(500 - zero_point, 17500 - zero_point)
+current_ax += 1
 
 # get cutoff
 upper_cutoff = np.full(len(datetime_dates), 1300)
+upper_cutoff -= zero_point
 lower_cutoff = np.array([1100 if (x < datetime(2014, 5, 1))
                          else 1070 if (x < datetime(2015, 8, 15))
                          else 1010 if (x < datetime(2016, 12, 1))
                          else 980 if (x < datetime(2018, 4, 1))
                          else 950 for x in datetime_dates])
-
-axs[0].plot_date(datetime_dates, upper_cutoff,
-                 label='upper cutoff',
-                 linestyle="-",
-                 marker="")
+lower_cutoff -= zero_point
 
 
-axs[0].plot_date(datetime_dates, lower_cutoff,
-                 label='lower cutoff',
-                 linestyle="-",
-                 marker="")
+axs[current_ax].plot_date(datetime_dates, upper_cutoff,
+                          label='upper cutoff',
+                          linestyle="-",
+                          marker="")
 
 
-axs[0].plot_date(datetime_dates, percentiles[8],
-                 label='75th percentile',
-                 markersize=1)
+axs[current_ax].plot_date(datetime_dates, lower_cutoff,
+                          label='lower cutoff',
+                          linestyle="-",
+                          marker="")
 
-axs[0].set_ylim(900, 1400)
+
+axs[current_ax].plot_date(datetime_dates, percentiles[8],
+                          label='75th percentile',
+                          markersize=1)
+
+axs[current_ax].set_ylim(900 - zero_point, 1400 - zero_point)
+current_ax += 1
 
 outlier_indicies = np.array(((percentiles[8] < lower_cutoff) |
                              (percentiles[8] > upper_cutoff)))
@@ -78,7 +117,8 @@ outlier_indicies = np.nonzero(outlier_indicies)
 
 percentiles = np.delete(percentiles, outlier_indicies, 1)
 dates = np.delete(dates, outlier_indicies)
-datetime_dates = np.delete(datetime_dates, outlier_indicies)
+
+datetime_dates = np.delete(datetime_dates, outlier_indicies[0])
 
 
 def moving_average(a, n):
@@ -92,36 +132,27 @@ rolling_dates = dates[n//2-1:-n//2]
 percentiles = percentiles.T[n//2-1:-n//2].T
 datetime_dates = datetime_dates[n//2-1:-n//2]
 normal_percentiles = percentiles/rolling_75p
-axs[1].plot_date(datetime_dates, rolling_75p,
-                 label=f'Rolling 75th percentile\n(over {n} images)',
-                 markersize=1)
-axs[1].set_ylim(900, 1400)
-
-
-q = [0, 0.01, 0.1, 1, 5, 10, 25, 50, 75, 90, 95, 99, 99.9, 99.99, 100]
-for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
-    axs[2].plot_date(datetime_dates, normal_percentiles[i],
-                     label=f'${q[i]}$th percentile',
-                     markersize=1)
-# axs[2].set_yscale("log")
-# clip_max = np.max(normal_percentiles[-1][:50])
-# # use the average 99.99th percentile
-# # clip_max = np.average(normal_percentiles[-2])
-# print(clip_max)
-# normal_percentiles = normal_percentiles.clip(None, clip_max)
-# cam_normal = cam_normal.clip(None, clip_max)
-
-# normal_percentiles = normal_percentiles/clip_max
+axs[current_ax].plot_date(datetime_dates, rolling_75p,
+                          label=f'Rolling 75th percentile\n(over {n} images)',
+                          markersize=1)
+axs[current_ax].set_ylim(900 - zero_point, 1400 - zero_point)
+current_ax += 1
 
 # for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
-#     axs[3].plot_date(datetime_dates, normal_percentiles[i],
-#                      label=f'${q[i]}$th percentile',
-#                      markersize=1)
-# if args.cam:
-#     axs[3].plot_date(datetime_dates, cam_normal,
-#                      label='Cam factor',
-#                      c='k',
-#                      markersize=1)
+#     axs[current_ax].plot_date(datetime_dates, normal_percentiles[i],
+#                               label=f'${q[i]}$th percentile',
+#                               markersize=1)
+# axs[current_ax].set_yscale("log")
+
+# clip max from AIA
+clip_max = 110.59708760329583
+normal_percentiles = normal_percentiles/clip_max
+
+for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
+    axs[current_ax].plot_date(datetime_dates, normal_percentiles[i],
+                              label=f'${q[i]}$th percentile',
+                              markersize=1)
+axs[current_ax].set_ylim(0, 1)
 
 
 # normal_percentiles = np.sign(normal_percentiles) * \
@@ -129,23 +160,23 @@ for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
 
 
 # for i in range(len(percentiles)-1, - 1, -1):
-#     axs[4].plot_date(datetime_dates, normal_percentiles[i],
+#     axs[current_ax].plot_date(datetime_dates, normal_percentiles[i],
 #                     #  label=f'${q[i]}$th percentile',
 #                      markersize=1)
 
 
-# axs[0].set_ylabel("Pixel Intensity")
-# axs[1].set_ylabel("Pixel Intensity")
+# axs[current_ax].set_ylabel("Pixel Intensity")
+# axs[current_ax].set_ylabel("Pixel Intensity")
 
 # if args.log:
-#     axs[2].set_ylabel("Pixel Intensity (log scale)")
-#     axs[2].set_yscale('log')
+#     axs[current_ax].set_ylabel("Pixel Intensity (log scale)")
+#     axs[current_ax].set_yscale('log')
 # else:
-#     axs[2].set_ylabel("Pixel Intensity")
+#     axs[current_ax].set_ylabel("Pixel Intensity")
 
-# axs[3].set_ylabel("Pixel Intensity")
-# axs[4].set_ylabel("Pixel Intensity")
-# axs[4].set_ylim(0, 1)
+# axs[current_ax].set_ylabel("Pixel Intensity")
+# axs[current_ax].set_ylabel("Pixel Intensity")
+# axs[current_ax].set_ylim(0, 1)
 
 # GET TICkS
 rule = rrulewrapper(MONTHLY, interval=6)
@@ -155,6 +186,7 @@ formatter = DateFormatter('%m/%y')
 axs[-1].xaxis.set_major_formatter(formatter)
 axs[-1].xaxis.set_tick_params(rotation=30, labelsize=10)
 axs[-1].set_xlabel("Date")
+axs[-1].set_xlim(datetime_dates[0], datetime_dates[-1])
 
 for ax in axs:
     # Put a legend to the right of the current axis
