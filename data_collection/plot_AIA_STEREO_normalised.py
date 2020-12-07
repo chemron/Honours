@@ -5,8 +5,6 @@ from matplotlib.dates import (MONTHLY, DateFormatter,
                               rrulewrapper, RRuleLocator)
 plt.switch_backend('agg')
 
-# TODO: REMOVE!!!!
-multiplier = 3.3
 
 def moving_average(a, n):
     ret = np.cumsum(a, dtype=float)
@@ -45,12 +43,11 @@ def plot_AIA(ax):
 
     normal_percentiles = normal_percentiles/clip_max
 
-    # TODO: REMOVE MULTIPLIER!
     for i in range(len(percentiles)-1, - 1, -1):
-        ax.plot_date(datetime_dates, normal_percentiles[i]*multiplier,
+        ax.plot_date(datetime_dates, normal_percentiles[i],
                      label=f'${q[i]}$th percentile',
                      markersize=1)
-    
+
     # GET TICkS
     rule = rrulewrapper(MONTHLY, interval=6)
     loc = RRuleLocator(rule)
@@ -64,13 +61,11 @@ def plot_AIA(ax):
     ax.set_ylabel("Pixel Intensity (normalised)")
 
 
-
-
 def plot_STEREO(ax):
     # moving average over 50 images
     mode = "STEREO"
     n = 50
-    
+
     percentiles = np.load(f"DATA/np_objects/{mode}_percentiles.npy").T
     dates = np.load(f"DATA/np_objects/{mode}_dates.npy")
     dates = np.apply_along_axis(lambda d: d[0] + d[1], 1, dates)
@@ -113,9 +108,8 @@ def plot_STEREO(ax):
     clip_max = 110.59708760329583
     normal_percentiles = normal_percentiles/clip_max
 
-    # TODO: REMOVE MULTIPLIER!
     for i in range(len(percentiles)-1, - 1, -1):
-        ax.plot_date(datetime_dates, normal_percentiles[i]*multiplier,
+        ax.plot_date(datetime_dates, normal_percentiles[i],
                      label=f'${q[i]}$th percentile',
                      markersize=1)
     ax.set_ylim(0, 1)
