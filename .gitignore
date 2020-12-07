@@ -5,4 +5,5 @@ SCRIPTS/
 *.out
 *.ipynb
 *.png
+*.pdf
 */__pycache__

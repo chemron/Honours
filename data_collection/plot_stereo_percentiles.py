@@ -11,7 +11,7 @@ dates = np.load("DATA/np_objects/STEREO_dates.npy")
 plt_dates = [datetime.strptime(date[0] + date[1], "%Y%m%d%H%M%S") for date in dates]
 
 # plot percentiles vs dates
-fig, ax = plt.subplots(1, 1, figsize=(20, 8), sharex=True)
+fig, ax = plt.subplots(1, 1, figsize=(20, 10), sharex=True)
 for i in range(len(percentiles)-1, -1, -1):
     ax.plot_date(plt_dates, percentiles[i],
                  label=f'${q[i]}$th percentile',
@@ -19,6 +19,7 @@ for i in range(len(percentiles)-1, -1, -1):
 
 ax.set_yscale('log')
 ax.set_ylim(500, 17500)
+ax.set_ylabel("Pixel Intensity")
 
 # GET TICkS
 rule = rrulewrapper(MONTHLY, interval=6)
@@ -36,3 +37,5 @@ ax.set_adjustable('box-forced')
 
 plt.tight_layout()
 fig.savefig("percentile_plots/STEREO_percentiles.png", bbox_inches='tight')
+fig.savefig("percentile_plots/STEREO_percentiles.pdf", bbox_inches='tight')
+

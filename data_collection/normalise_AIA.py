@@ -50,6 +50,8 @@ w = h = 1024  # desired width and height of output
 
 # plot percentiles vs dates
 fig, axs = plt.subplots(5, 1, figsize=(10, 12), sharex=True)
+handles = []
+labels = []
 
 # cameron factor
 cam_factor = percentiles[7]*15
@@ -95,7 +97,7 @@ axs[1].plot_date(datetime_dates, rolling_75p,
 
 
 q = [0, 0.01, 0.1, 1, 5, 10, 25, 50, 75, 90, 95, 99, 99.9, 99.99, 100]
-for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
+for i in range(len(percentiles)-1, -1, -1):
     axs[2].plot_date(datetime_dates, normal_percentiles[i],
                      label=f'${q[i]}$th percentile',
                      markersize=1)
@@ -115,7 +117,7 @@ cam_normal = cam_normal.clip(None, clip_max)
 
 normal_percentiles = normal_percentiles/clip_max
 
-for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
+for i in range(len(percentiles)-1, - 1, -1):
     axs[3].plot_date(datetime_dates, normal_percentiles[i],
                      label=f'${q[i]}$th percentile',
                      markersize=1)
@@ -157,11 +159,18 @@ axs[-1].xaxis.set_major_formatter(formatter)
 axs[-1].xaxis.set_tick_params(rotation=30, labelsize=10)
 axs[-1].set_xlabel("Date")
 
-for ax in axs:
-    # Put a legend to the right of the current axis
-    box = ax.get_position()
-    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+for ax in axs[[0, 1, 3]]:
+    ax_handles, ax_labels = ax.get_legend_handles_labels()
+    handles += ax_handles
+    labels += ax_labels
+
+fig.legend(handles, labels, loc='upper right')
+
+# for ax in axs[[0, 1, 3]]:
+#     # Put a legend to the right of the current axis
+#     box = ax.get_position()
+#     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+#     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
 plt.tight_layout()
 if args.cam:

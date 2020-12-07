@@ -42,11 +42,13 @@ datetime_dates = [datetime.strptime(date, "%Y%m%d%H%M%S")
 just_plot = args.just_plot
 w = h = 1024  # desired width and height of output
 
-n_ax = 6
+n_ax = 5
 current_ax = 0
 # plot percentiles vs dates
 fig, axs = plt.subplots(n_ax, 1, figsize=(10, 12), sharex=True)
 q = [0, 0.01, 0.1, 1, 5, 10, 25, 50, 75, 90, 95, 99, 99.9, 99.99, 100]
+handles = []
+labels = []
 
 # raw percentiles
 
@@ -57,8 +59,11 @@ for i in range(len(percentiles)-1, -1, -1):
 
 # axs[current_ax].set_yscale('log')
 axs[current_ax].set_ylim(500, 17500)
-
+axs[current_ax].set_ylabel("Raw Pixel Intensity\n Percentiles")
 # next ax:
+ax_handles, ax_labels = axs[current_ax].get_legend_handles_labels()
+handles += ax_handles
+labels += ax_labels
 current_ax += 1
 
 # zero point
@@ -79,6 +84,10 @@ for i in range(len(percentiles)-1, -1, -1):
 
 # axs[current_ax].set_yscale('log')
 axs[current_ax].set_ylim(500 - zero_point, 17500 - zero_point)
+axs[current_ax].set_ylabel("Shifted Pixel\n Intensity Percentiles")
+# ax_handles, ax_labels = axs[current_ax].get_legend_handles_labels()
+# handles += ax_handles
+# labels += ax_labels
 current_ax += 1
 
 # get cutoff
@@ -109,6 +118,10 @@ axs[current_ax].plot_date(datetime_dates, percentiles[8],
                           markersize=1)
 
 axs[current_ax].set_ylim(900 - zero_point, 1400 - zero_point)
+axs[current_ax].set_ylabel("75th Percentile\n Pixel Intensity")
+ax_handles, ax_labels = axs[current_ax].get_legend_handles_labels()
+handles += ax_handles
+labels += ax_labels
 current_ax += 1
 
 outlier_indicies = np.array(((percentiles[8] < lower_cutoff) |
@@ -136,6 +149,10 @@ axs[current_ax].plot_date(datetime_dates, rolling_75p,
                           label=f'Rolling 75th percentile\n(over {n} images)',
                           markersize=1)
 axs[current_ax].set_ylim(900 - zero_point, 1400 - zero_point)
+axs[current_ax].set_ylabel("Rolling 75th\n Percentile Pixel\n Intensity")
+ax_handles, ax_labels = axs[current_ax].get_legend_handles_labels()
+handles += ax_handles
+labels += ax_labels
 current_ax += 1
 
 # for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
@@ -152,7 +169,8 @@ for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
     axs[current_ax].plot_date(datetime_dates, normal_percentiles[i],
                               label=f'${q[i]}$th percentile',
                               markersize=1)
-axs[current_ax].set_ylim(0, 1)
+axs[current_ax].set_ylim(0, 0.6)
+axs[current_ax].set_ylabel("Normalised Pixel\n Intensity Percentiles")
 
 
 # normal_percentiles = np.sign(normal_percentiles) * \
@@ -188,11 +206,17 @@ axs[-1].xaxis.set_tick_params(rotation=30, labelsize=10)
 axs[-1].set_xlabel("Date")
 axs[-1].set_xlim(datetime_dates[0], datetime_dates[-1])
 
-for ax in axs:
-    # Put a legend to the right of the current axis
-    box = ax.get_position()
-    ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
-    ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+# ax_handles, ax_labels = axs[current_ax].get_legend_handles_labels()
+# handles += ax_handles
+# labels += ax_labels
+
+fig.legend(handles, labels, loc='upper right')
+
+# for ax in axs[[0, 2, 3]]:
+#     # Put a legend to the right of the current axis
+#     box = ax.get_position()
+#     ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+#     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
 plt.tight_layout()
 
