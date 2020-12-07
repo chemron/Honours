@@ -1,35 +1,16 @@
 from datetime import datetime
-import os
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.dates import (MONTHLY, DateFormatter,
                               rrulewrapper, RRuleLocator)
-import argparse
 plt.switch_backend('agg')
 
-
-parser = argparse.ArgumentParser()
-parser.add_argument("--data",
-                    help="name of data",
-                    default='STEREO'
-                    )
-parser.add_argument("--log",
-                    action="store_true",
-                    )
-parser.add_argument("--just_plot",
-                    action="store_true",
-                    )
-parser.add_argument("--func",
-                    default="",
-                    )
-args = parser.parse_args()
-mode = args.data
+mode = 'STEREO'
+func = ''
+log = False
 
 # moving average over 50 images
 n = 50
-np_dir = f"DATA/np_{mode}/"
-normal_np_dir = f"DATA/np_{mode}_normalised{args.func}/"
-os.makedirs(normal_np_dir) if not os.path.exists(normal_np_dir) else None
 
 percentiles = np.load(f"DATA/np_objects/{mode}_percentiles.npy").T
 dates = np.load(f"DATA/np_objects/{mode}_dates.npy")
@@ -39,22 +20,29 @@ if mode == "STEREO":
 datetime_dates = [datetime.strptime(date, "%Y%m%d%H%M%S")
                   for date in dates]
 # don't normalise data, just plot percentiles:
-just_plot = args.just_plot
-w = h = 1024  # desired width and height of output
 
-n_ax = 5
+n_ax = 6
 current_ax = 0
 # plot percentiles vs dates
-fig, axs = plt.subplots(n_ax, 1, figsize=(10, 12), sharex=True)
+fig, axs = plt.subplots(n_ax, 1, figsize=(10, n_ax*2.5), sharex=True)
 q = [0, 0.01, 0.1, 1, 5, 10, 25, 50, 75, 90, 95, 99, 99.9, 99.99, 100]
 handles = []
 labels = []
+
+# get colors:
+cmap = list(plt.get_cmap("tab10").colors)
+cmap = cmap + cmap
+cmap = cmap[14::-1]
+# switch so green is 75th percentile
+green = cmap[-3]
+cmap = cmap[:8] + [green] + cmap[8:-3] + cmap[-2:]
 
 # raw percentiles
 
 for i in range(len(percentiles)-1, -1, -1):
     axs[current_ax].plot_date(datetime_dates, percentiles[i],
                               label=f'${q[i]}$th percentile',
+                              c=cmap[i],
                               markersize=1)
 
 # axs[current_ax].set_yscale('log')
@@ -72,14 +60,15 @@ zero_point = np.average(zero_point)
 zero_point = int(np.round(zero_point))
 
 percentiles -= zero_point
+print(f'Zero point is: {zero_point}')
 
 
 # shifted percentiles
 
-
 for i in range(len(percentiles)-1, -1, -1):
     axs[current_ax].plot_date(datetime_dates, percentiles[i],
                               label=f'${q[i]}$th percentile',
+                              c=cmap[i],
                               markersize=1)
 
 # axs[current_ax].set_yscale('log')
@@ -102,20 +91,21 @@ lower_cutoff -= zero_point
 
 
 axs[current_ax].plot_date(datetime_dates, upper_cutoff,
-                          label='upper cutoff',
+                          label='Outlier cutoff',
                           linestyle="-",
-                          marker="")
+                          marker="",
+                          c="k")
 
 
 axs[current_ax].plot_date(datetime_dates, lower_cutoff,
-                          label='lower cutoff',
                           linestyle="-",
-                          marker="")
+                          marker="",
+                          c="k")
 
 
 axs[current_ax].plot_date(datetime_dates, percentiles[8],
-                          label='75th percentile',
-                          markersize=1)
+                          markersize=1,
+                          c=green)
 
 axs[current_ax].set_ylim(900 - zero_point, 1400 - zero_point)
 axs[current_ax].set_ylabel("75th Percentile\n Pixel Intensity")
@@ -144,10 +134,10 @@ rolling_75p = moving_average(percentiles[8], n)
 rolling_dates = dates[n//2-1:-n//2]
 percentiles = percentiles.T[n//2-1:-n//2].T
 datetime_dates = datetime_dates[n//2-1:-n//2]
-normal_percentiles = percentiles/rolling_75p
 axs[current_ax].plot_date(datetime_dates, rolling_75p,
                           label=f'Rolling 75th percentile\n(over {n} images)',
-                          markersize=1)
+                          markersize=1,
+                          c=green)
 axs[current_ax].set_ylim(900 - zero_point, 1400 - zero_point)
 axs[current_ax].set_ylabel("Rolling 75th\n Percentile Pixel\n Intensity")
 ax_handles, ax_labels = axs[current_ax].get_legend_handles_labels()
@@ -155,46 +145,92 @@ handles += ax_handles
 labels += ax_labels
 current_ax += 1
 
-# for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
-#     axs[current_ax].plot_date(datetime_dates, normal_percentiles[i],
-#                               label=f'${q[i]}$th percentile',
-#                               markersize=1)
-# axs[current_ax].set_yscale("log")
 
-# clip max from AIA
-clip_max = 110.59708760329583
+# # clip max from AIA
+# clip_max = 110.59708760329583
+# normal_percentiles = normal_percentiles/clip_max
+
+# normal percentiles
+normal_percentiles = percentiles/rolling_75p
+
+
+# rolling max:
+# generate next list from which to take max from:
+def gen_rolling_list(lst, k):
+    n = len(lst)
+    current_lst = lst[:k]
+    for i in range(n):
+        if (i > k) and (i < n-k):
+            right = min(i + k//2, n)
+            left = max(0, right - k)
+            current_lst = lst[left:right]
+
+        yield max(current_lst)
+
+
+rolling_max = list(gen_rolling_list(normal_percentiles[-1], 50))
+clip_max = min(rolling_max)
+
+
+# axs[current_ax].plot_date(datetime_dates, rolling_max,
+#                           label='rolling max',
+#                           markersize=1)
+# axs[current_ax].set_ylim(0)
+# axs[current_ax].set_ylabel("Rolling max")
+# handles += ax_handles
+# labels += ax_labels
+# current_ax += 1
+
+for i in range(len(percentiles)-1, -1, -1):
+    axs[current_ax].plot_date(datetime_dates, normal_percentiles[i],
+                              # label=f'${q[i]}$th percentile',
+                              c=cmap[i],
+                              markersize=1)
+
+
+# plot clip max
+clip_max_line = np.full(len(normal_percentiles[-1]), clip_max)
+axs[current_ax].plot_date(datetime_dates, clip_max_line,
+                          label='Clip point',
+                          linestyle="--",
+                          marker="",
+                          c='k')
+ax_handles, ax_labels = axs[current_ax].get_legend_handles_labels()
+handles += ax_handles
+labels += ax_labels
+axs[current_ax].set_ylim(0)
+axs[current_ax].set_ylabel("Normalised Pixel\n Intensity Percentiles")
+current_ax += 1
+
+# scale so min max is 1
+print(f"Clip max is: {clip_max}")
 normal_percentiles = normal_percentiles/clip_max
 
-for i in range(len(percentiles)-1, len(percentiles)//2 - 1, -1):
+
+# transform data
+normal_percentiles = np.sign(normal_percentiles) * \
+                      (np.abs(normal_percentiles)**(1/2))
+
+
+for i in range(len(percentiles)-1, -1, -1):
     axs[current_ax].plot_date(datetime_dates, normal_percentiles[i],
-                              label=f'${q[i]}$th percentile',
+                              #  label=f'${q[i]}$th percentile',
+                              c=cmap[i],
                               markersize=1)
-axs[current_ax].set_ylim(0, 0.6)
-axs[current_ax].set_ylabel("Normalised Pixel\n Intensity Percentiles")
 
 
-# normal_percentiles = np.sign(normal_percentiles) * \
-#                       (np.abs(normal_percentiles)**(1/2))
+axs[current_ax].set_ylabel("Pixel Intensity")
+axs[current_ax].set_ylabel("Pixel Intensity")
 
+if log:
+    axs[current_ax].set_ylabel("Pixel Intensity (log scale)")
+    axs[current_ax].set_yscale('log')
+else:
+    axs[current_ax].set_ylabel("Pixel Intensity")
 
-# for i in range(len(percentiles)-1, - 1, -1):
-#     axs[current_ax].plot_date(datetime_dates, normal_percentiles[i],
-#                     #  label=f'${q[i]}$th percentile',
-#                      markersize=1)
-
-
-# axs[current_ax].set_ylabel("Pixel Intensity")
-# axs[current_ax].set_ylabel("Pixel Intensity")
-
-# if args.log:
-#     axs[current_ax].set_ylabel("Pixel Intensity (log scale)")
-#     axs[current_ax].set_yscale('log')
-# else:
-#     axs[current_ax].set_ylabel("Pixel Intensity")
-
-# axs[current_ax].set_ylabel("Pixel Intensity")
-# axs[current_ax].set_ylabel("Pixel Intensity")
-# axs[current_ax].set_ylim(0, 1)
+axs[current_ax].set_ylabel("Pixel Intensity")
+axs[current_ax].set_ylabel("Pixel Intensity")
+axs[current_ax].set_ylim(0, 1)
 
 # GET TICkS
 rule = rrulewrapper(MONTHLY, interval=6)
@@ -221,30 +257,5 @@ fig.legend(handles, labels, loc='upper right')
 plt.tight_layout()
 
 fig.savefig(f"percentile_plots/{mode}_normalising_percentiles.png"
-            f"{args.func}",
+            f"{func}",
             bbox_inches='tight')
-
-
-# # normalise data
-# data = np.sort(os.listdir(np_dir))
-# data = np.delete(data, outlier_indicies)
-# data = data[n//2-1:-n//2]
-
-# print(len(data), len(rolling_75p))
-
-# if not just_plot:
-#     import cv2
-#     for i in range(len(data)):
-#         # what we need to divide by to normalise with clip_max at 1
-#         name = data[i]
-#         divider = rolling_75p[i]*clip_max
-#         filename = np_dir + name
-#         img = np.load(filename)
-#         img = img/divider
-#         img = img.clip(0, 1)
-#         img = np.sign(img) * (np.abs(img) ** (1/2))
-#         try:
-#             img = cv2.resize(img, dsize=(w, h))
-#             np.save(normal_np_dir + name, img)
-#         except cv2.error as e:
-#             print(f"{name}: {e}")
