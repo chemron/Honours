@@ -4,37 +4,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.dates import (MONTHLY, DateFormatter,
                               rrulewrapper, RRuleLocator)
-import argparse
+from normalise_stereo_p import clip_max
 plt.switch_backend('agg')
 
 
-parser = argparse.ArgumentParser()
-parser.add_argument("--data",
-                    help="name of data",
-                    default='AIA'
-                    )
-parser.add_argument("--log",
-                    action="store_true",
-                    )
-parser.add_argument("--just_plot",
-                    action="store_true",
-                    )
-parser.add_argument("--cam",
-                    action="store_true",
-                    )
-parser.add_argument("--func",
-                    default="",
-                    )
-parser.add_argument("--get_min_max",
-                    action="store_true",
-                    )
-args = parser.parse_args()
-mode = args.data
+mode = 'AIA'
+log = False
+cam = False
+func = ""
+get_min_max = False
 
 # moving average over 50 images
 n = 50
 np_dir = f"DATA/np_{mode}/"
-normal_np_dir = f"DATA/np_{mode}_normalised{args.func}/"
+normal_np_dir = f"DATA/np_{mode}_normalised{func}/"
 os.makedirs(normal_np_dir) if not os.path.exists(normal_np_dir) else None
 
 percentiles = np.load(f"DATA/np_objects/{mode}_percentiles.npy").T
@@ -44,8 +27,7 @@ if mode == "STEREO":
 
 datetime_dates = [datetime.strptime(date, "%Y%m%d%H%M%S")
                   for date in dates]
-# don't normalise data, just plot percentiles:
-just_plot = args.just_plot
+
 w = h = 1024  # desired width and height of output
 
 # plot percentiles vs dates
@@ -101,17 +83,17 @@ for i in range(len(percentiles)-1, -1, -1):
     axs[2].plot_date(datetime_dates, normal_percentiles[i],
                      label=f'${q[i]}$th percentile',
                      markersize=1)
-if args.cam:
+if cam:
     axs[2].plot_date(datetime_dates, cam_normal,
                      label='Cam factor',
                      markersize=1,
                      c='k'
                      )
 
-clip_max = np.max(normal_percentiles[-1][:50])
+# clip_max = np.max(normal_percentiles[-1][:50])
 # use the average 99.99th percentile
 # clip_max = np.average(normal_percentiles[-2])
-print(clip_max)
+# print(clip_max)
 normal_percentiles = normal_percentiles.clip(None, clip_max)
 cam_normal = cam_normal.clip(None, clip_max)
 
@@ -121,7 +103,7 @@ for i in range(len(percentiles)-1, - 1, -1):
     axs[3].plot_date(datetime_dates, normal_percentiles[i],
                      label=f'${q[i]}$th percentile',
                      markersize=1)
-if args.cam:
+if cam:
     axs[3].plot_date(datetime_dates, cam_normal,
                      label='Cam factor',
                      c='k',
@@ -140,7 +122,7 @@ for i in range(len(percentiles)-1, - 1, -1):
 axs[0].set_ylabel("Pixel Intensity")
 axs[1].set_ylabel("Pixel Intensity")
 
-if args.log:
+if log:
     axs[2].set_ylabel("Pixel Intensity (log scale)")
     axs[2].set_yscale('log')
 else:
@@ -173,13 +155,13 @@ fig.legend(handles, labels, loc='upper right')
 #     ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 
 plt.tight_layout()
-if args.cam:
+if cam:
     fig.savefig(f"percentile_plots/cam_{mode}_normalising_percentiles"
-                f"{args.func}.png",
+                f"{func}.png",
                 bbox_inches='tight')
 else:
     fig.savefig(f"percentile_plots/{mode}_normalising_percentiles.png"
-                f"{args.func}",
+                f"{func}",
                 bbox_inches='tight')
 
 
@@ -189,7 +171,7 @@ data = np.delete(data, outlier_indicies)
 data = data[n//2-1:-n//2]
 
 print(len(data), len(rolling_75p))
-if args.get_min_max:
+if get_min_max:
     from scipy.stats import percentileofscore
     minp = []
     maxp = []
@@ -209,19 +191,19 @@ if args.get_min_max:
     np.save(f"DATA/np_objects/{mode}_maxp", np.array(maxp))
 
 
-if not just_plot:
-    import cv2
-    for i in range(len(data)):
-        # what we need to divide by to normalise with clip_max at 1
-        name = data[i]
-        divider = rolling_75p[i]*clip_max
-        filename = np_dir + name
-        img = np.load(filename)
-        img = img/divider
-        img = img.clip(0, 1)
-        img = np.sign(img) * (np.abs(img) ** (1/2))
-        try:
-            img = cv2.resize(img, dsize=(w, h))
-            np.save(normal_np_dir + name, img)
-        except cv2.error as e:
-            print(f"{name}: {e}")
+# if not just_plot:
+#     import cv2
+#     for i in range(len(data)):
+#         # what we need to divide by to normalise with clip_max at 1
+#         name = data[i]
+#         divider = rolling_75p[i]*clip_max
+#         filename = np_dir + name
+#         img = np.load(filename)
+#         img = img/divider
+#         img = img.clip(0, 1)
+#         img = np.sign(img) * (np.abs(img) ** (1/2))
+#         try:
+#             img = cv2.resize(img, dsize=(w, h))
+#             np.save(normal_np_dir + name, img)
+#         except cv2.error as e:
+#             print(f"{name}: {e}")
