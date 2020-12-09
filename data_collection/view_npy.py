@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import os
 
 plt.switch_backend("agg")
-modes = ["STEREO"]  # , "HMI", "AIA"]
+modes = ["STEREO", "HMI", "AIA"]
 for mode in modes:
     folder = f"DATA/np_{mode}_normalised/"
     filename = folder + os.listdir(folder)[0]

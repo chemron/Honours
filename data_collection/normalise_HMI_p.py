@@ -80,7 +80,7 @@ if args.cam:
                      label='Cam factor',
                      markersize=1,
                      c='k')
-   
+
 axs[0].set_ylabel("Magnetic field strength (Gauss)")
 axs[1].set_ylabel("Normalised magnetic field strength")
 
@@ -111,18 +111,3 @@ else:
 
 # normalise data
 data = np.sort(os.listdir(np_dir))
-
-if not just_plot:
-    import cv2
-    for i in range(len(data)):
-        name = data[i]
-        filename = np_dir + name
-        img = np.load(filename)
-        img = img/clip_max
-        img = img.clip(-1, 1)
-        img = np.sign(img) * (np.abs(img) ** (1/2))
-        try:
-            img = cv2.resize(img, dsize=(w, h))
-            np.save(normal_np_dir + name, img)
-        except cv2.error as e:
-            print(f"{name}: {e}")
