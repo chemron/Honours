@@ -79,7 +79,7 @@ for iter in iters:
         mag = path + filename
         date = GET_DATE_STR(mag)
         # input file of gan with same date
-        x_file = f"{input_test_dir}{x}_{date}.npy"
+        x_file = f"{input_test_dir}{x[:3]}_{date}.npy"
         y_file = f"{output_test_dir}{y}_{date}.npy" if y is not None else None
 
         x_arr = (np.load(x_file) * 255).clip(0, 255).astype('uint8')
