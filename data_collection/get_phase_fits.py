@@ -13,7 +13,7 @@ start_date = datetime(2010, 4, 24)
 end_date = datetime(2014, 9, 8)
 dt = timedelta(hours=12)
 
-folder = "./DATA/fits_phase_maps/"
+folder = "./DATA/fits_phase_map/"
 os.makedirs(folder) if not os.path.exists(folder) else None
 
 # http://jsoc.stanford.edu/data/farside/Phase_Maps/2010/PHASE_MAP_2010.04.25_00:00:00.fits
