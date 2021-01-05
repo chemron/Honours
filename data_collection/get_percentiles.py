@@ -2,6 +2,7 @@ import os
 import numpy as np
 import sunpy
 import sunpy.map
+from astropy.io import fits
 from astropy.coordinates import SkyCoord
 import argparse
 
@@ -20,6 +21,8 @@ already_done = os.listdir(np_dir)
 files = np.sort(os.listdir(fits_dir))
 dates = []
 q = [0, 0.01, 0.1, 1, 5, 10, 25, 50, 75, 90, 95, 99, 99.9, 99.99, 100]
+p_w = 361  # width and height of phase maps
+p_h = 180
 
 
 def get_percentiles(filename):
@@ -30,21 +33,72 @@ def get_percentiles(filename):
             data = np.load(f"{np_dir}{name}.npy").flatten()
         else:
             print(filename)
-            map_ref = sunpy.map.Map(fits_dir + filename)
 
-            # not necessary for percentiles
-            mat = map_ref.rotation_matrix
-            map_ref = map_ref.rotate(rmatrix=mat)
+            if mode == 'phase_map':
+                hdul = fits.open(fits_dir + filename, memmap=False, ext=0)
+                hdul.verify("fix")
 
-            # crop so only sun is shown
-            radius = map_ref.rsun_obs
-            top_right = SkyCoord(radius, radius,
-                                 frame=map_ref.coordinate_frame)
-            bottom_left = SkyCoord(-radius, -radius,
-                                   frame=map_ref.coordinate_frame)
-            submap = map_ref.submap(bottom_left, top_right)
+                data = hdul[0].data
 
-            data = submap.data
+                # cut off top:
+                data = data[1:]
+
+                # rotate if less than half of the top row is nan
+                rotate = False
+                if np.sum(np.isnan(data)[0]) < p_w//2:
+                    rotate = True
+                    data = np.rot90(data, 2)
+
+                # location of nans in data
+                nan_loc = np.where(np.isnan(data))
+
+                # location of lowest nans in image
+                low_nan = (nan_loc[0] == np.max(nan_loc[0]))
+                low_nan_loc = np.where(low_nan)
+
+                # collumns of lowest nans
+                low_nan_x = nan_loc[1][np.min(low_nan_loc):np.max(low_nan_loc)]
+
+                # if zero in low_nan_x then lowest nan's are split across edges
+                if 0 in low_nan_x:
+                    # number of nans on left edge
+                    n = sum((low_nan_x < p_w//2))
+                    # rearange so it's like (... , 360, 361, 0, 1, ...)
+                    low_nan_x = np.concatenate((low_nan_x[n:], low_nan_x[:n]))
+
+                # centre collumn of nans:
+                centre = low_nan_x[len(low_nan_x)//2]
+
+                # split into two parts along the centre of nans:
+                split = np.hsplit(data,
+                                  [centre]
+                                  )
+
+                # combine
+                data = np.concatenate((split[1], split[0]), axis=1)
+
+                # Rotate back if rotated earlier
+                if rotate:
+                    data = np.rot90(data, 2)
+
+            else:
+                # HMI or AIA
+                map_ref = sunpy.map.Map(fits_dir + filename)
+
+                # not necessary for percentiles
+                mat = map_ref.rotation_matrix
+                map_ref = map_ref.rotate(rmatrix=mat)
+
+                # crop so only sun is shown
+                radius = map_ref.rsun_obs
+                top_right = SkyCoord(radius, radius,
+                                     frame=map_ref.coordinate_frame)
+                bottom_left = SkyCoord(-radius, -radius,
+                                       frame=map_ref.coordinate_frame)
+                submap = map_ref.submap(bottom_left, top_right)
+
+                data = submap.data
+
             if data is not None:
                 np.save(f"{np_dir}{name}", data)
                 data = np.nan_to_num(data).flatten()

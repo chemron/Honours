@@ -1,11 +1,16 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
-
 plt.switch_backend("agg")
-modes = ["STEREO", "HMI", "AIA"]
+modes = ["phase_map"]  # , "STEREO", "HMI", "AIA"]
+normalised = False
+
 for mode in modes:
-    folder = f"DATA/np_{mode}_normalised/"
+    if normalised:
+        folder = f"DATA/np_{mode}_normalised/"
+    else:
+        folder = f"DATA/np_{mode}/"
+
     filename = folder + os.listdir(folder)[0]
 
     arr = np.load(filename)

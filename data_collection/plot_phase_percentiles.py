@@ -6,8 +6,8 @@ from matplotlib.dates import (MONTHLY, DateFormatter,
 plt.switch_backend('agg')
 
 q = [0, 0.01, 0.1, 1, 5, 10, 25, 50, 75, 90, 95, 99, 99.9, 99.99, 100]
-percentiles = np.load("DATA/phase_map_percentiles.npy").T
-dates = np.load("DATA/phase_map_dates.npy")
+percentiles = np.load("DATA/np_objects/phase_map_percentiles.npy").T
+dates = np.load("DATA/np_objects/phase_map_dates.npy")
 plt_dates = [datetime.strptime(date, "%Y%m%d%H%M%S") for date in dates]
 
 # plot percentiles vs dates
@@ -37,4 +37,4 @@ ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 ax.set_adjustable('box-forced')
 
 plt.tight_layout()
-fig.savefig("phase_percentiles.png", bbox_inches='tight')
+fig.savefig("percentile_plots/phase_percentiles.png", bbox_inches='tight')
