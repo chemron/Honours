@@ -1,7 +1,7 @@
 from datetime import datetime
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.dates import (MONTHLY, DateFormatter,
+from matplotlib.dates import (MONTHLY, DAILY, DateFormatter,
                               rrulewrapper, RRuleLocator)
 plt.switch_backend('agg')
 
@@ -23,10 +23,16 @@ ax.set_ylabel("Pixel value")
 
 
 # GET TICkS
-rule = rrulewrapper(MONTHLY, interval=6)
+rule = rrulewrapper(DAILY, interval=1)
+formatter = DateFormatter('%d/%m')
+ax.set_xlim(datetime(2018, 3, 20), datetime(2018, 4, 15))
+
+
+# rule = rrulewrapper(MONTHLY, interval=6)
+# formatter = DateFormatter('%m/%y')
+
 loc = RRuleLocator(rule)
 ax.xaxis.set_major_locator(loc)
-formatter = DateFormatter('%m/%y')
 ax.xaxis.set_major_formatter(formatter)
 ax.xaxis.set_tick_params(rotation=30, labelsize=10)
 ax.set_xlabel("Date")
