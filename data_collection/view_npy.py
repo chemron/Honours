@@ -2,8 +2,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 plt.switch_backend("agg")
-modes = ["STEREO"]  # ["phase_map", "STEREO", "HMI", "AIA"]
-normalised = True
+modes = ["phase_map_square"]  # ["phase_map", "STEREO", "HMI", "AIA"]
+normalised = False
 
 for mode in modes:
     if normalised:
@@ -11,8 +11,8 @@ for mode in modes:
     else:
         folder = f"DATA/np_{mode}/"
 
-    # filename = folder + "PHASE_MAP_2012.05.25_00:00:00.npy"  # os.listdir(folder)[0]
-    filename = folder + "STE_2012.05.20_01:46:15.npy"
+    filename = folder +  os.listdir(folder)[0]
+    # filename = folder + "STE_2012.05.20_01:46:15.npy" "PHASE_MAP_2012.05.25_00:00:00.npy" 
 
     arr = np.load(filename)
     arr = np.nan_to_num(arr)
