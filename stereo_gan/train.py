@@ -3,6 +3,7 @@ import os
 import glob
 import time
 from random import shuffle
+from get_equivalent_time import get_stereo_time
 
 import tensorflow.keras.backend as K
 from tensorflow.keras.models import Model
@@ -55,9 +56,6 @@ parser.add_argument("--max_iter",
                     type=int,
                     default=500000
                     )
-parser.add_argument("--func",
-                    default=""
-                    )
 args = parser.parse_args()
 
 # Hyper parameters
@@ -66,11 +64,9 @@ DISPLAY_ITERS = args.display_iter
 NITERS = args.max_iter  # total number of iterations
 
 # the input data:
-# (originally AIA or Atmospheric Imaging Assembly)
-INPUT_DATA = "AIA"
+INPUT_DATA = "S_MAP"
 # The data we want to reproduce:
-# (originally HMI or Helioseismic and Magnetic Imager)
-OUTPUT_DATA = 'HMI'
+OUTPUT_DATA = 'MAG'
 
 ISIZE = 1024  # height of the image
 NC_IN = 1  # number of input channels (1 for greyscale, 3 for RGB)
@@ -85,8 +81,8 @@ TRIAL_NAME = args.model_name
 
 MODE = INPUT_DATA + '_to_' + OUTPUT_DATA  # folder name for saving the model
 
-IMAGE_PATH_INPUT = f'./DATA/aia_train{args.func}/*'  # input file path
-IMAGE_PATH_OUTPUT = f'./DATA/hmi_train{args.func}/*'  # ouptut file path
+IMAGE_PATH_INPUT = f'./DATA/{INPUT_DATA}_train/*'  # input file path
+IMAGE_PATH_OUTPUT = f'./DATA/{OUTPUT_DATA}/*'  # ouptut file path
 
 # make a folder for the trial if it doesn't already exist
 MODEL_PATH_MAIN = './MODELS/' + TRIAL_NAME + '/'
@@ -327,7 +323,7 @@ def LOAD_DATA(FILE_PATTERN):
 def GET_DATE(file):
     filename = file.split("/")[-1]  # filename is at end of file path
     date_str = filename.split("_")  # date string is after first "_"
-    date_str = date_str[1] + date_str[2]
+    date_str = date_str[-2] + date_str[-1]
     date = datetime.strptime(date_str, "%Y.%m.%d%H:%M:%S.npy")
     return date
 
@@ -342,10 +338,10 @@ def READ_IMAGE(FN, NC_IN, NC_OUT):
     X, Y = np.random.randint(31), np.random.randint(31)
     if NC_IN != 1:
         IMG_A = np.pad(IMG_A, ((15, 15), (15, 15), (0, 0)), 'constant')
-        IMG_A = IMG_A[X:X + 1024, Y:Y + 1024, :] * 2 - 1
+        IMG_A = IMG_A[X:X + 1024, Y:Y + 1024, :]  # * 2 - 1
     else:
         IMG_A = np.pad(IMG_A, 15, 'constant')
-        IMG_A = IMG_A[X:X + 1024, Y:Y + 1024] * 2 - 1
+        IMG_A = IMG_A[X:X + 1024, Y:Y + 1024]  # * 2 - 1
 
     if NC_OUT != 1:
         IMG_B = np.pad(IMG_B, ((15, 15), (15, 15), (0, 0)), 'constant')
@@ -394,6 +390,7 @@ LIST_OUTPUT = sorted(LIST_OUTPUT)
 LIST_INPUT = sorted(LIST_INPUT)
 
 
+# TODO: align dates
 i = 0  # index of LIST_INPUT
 j = 0  # index of LIST_OUTPUT
 
@@ -401,13 +398,20 @@ j = 0  # index of LIST_OUTPUT
 while i < len(LIST_INPUT) and j < len(LIST_OUTPUT):
     input = LIST_INPUT[i]
     in_time = GET_DATE(input)
+    # equivalent stereo time due to rotation
+    stereo_time = get_stereo_time(in_time)
+
     output = LIST_OUTPUT[j]
     out_time = GET_DATE(output)
-    if abs(in_time - out_time) < timedelta(hours=1):
+    
+    # ignore if it has rotated more than ~ 90deg between stereo and farside
+    if abs(in_time - stereo_time) < timedelta(days=7):
+        del(LIST_INPUT[i])
+    elif (abs(stereo_time - out_time) < timedelta(hours=2)):
         i += 1
         j += 1
     # if input is after output, delete output:
-    elif in_time > out_time:
+    elif stereo_time > out_time:
         del(LIST_OUTPUT[j])
     # if input is before output, delete input:
     else:
