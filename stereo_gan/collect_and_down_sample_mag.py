@@ -5,7 +5,7 @@ import cv2
 model = "P100_4"
 dir_in = f"../kim_gan/RESULTS/{model}/STEREO_to_MAG/"
 img_dir = np.sort(os.listdir(dir_in))[-1]
-dir_in = dir_in + img_dir
+dir_in = f"{dir_in}{img_dir}/"
 
 dir_out = "DATA/MAG/"
 os.makedirs(dir_out) if not os.path.exists(dir_out) else None
