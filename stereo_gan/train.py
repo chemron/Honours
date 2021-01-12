@@ -444,8 +444,10 @@ ERR_G_SUM = 0
 ERR_D_SUM = 0
 
 # training:
+i = 0
 while GEN_ITERS <= NITERS:
     EPOCH, TRAIN_A, TRAIN_B = next(TRAIN_BATCH)
+    print(LIST_TOTAL[i])
     # input data set
     TRAIN_A = TRAIN_A.reshape((BATCH_SIZE, ISIZE, ISIZE, NC_IN))
     # output data set
@@ -487,3 +489,5 @@ while GEN_ITERS <= NITERS:
         DST_MODEL = MODEL_PATH+MODE+'_ITER'+'%07d' % GEN_ITERS+'.h5'
         NET_G.save(DST_MODEL)
         T1 = time.time()
+
+    i += 1

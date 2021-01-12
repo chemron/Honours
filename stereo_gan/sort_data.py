@@ -2,7 +2,7 @@ import numpy as np
 import os
 from shutil import copyfile
 
-dir_in = "../data_collection/DATA/np_phase_map/"
+dir_in = "DATA/S_MAP/"  # "../data_collection/DATA/np_phase_map/"
 dir_out_train = "DATA/S_MAP_train/"
 dir_out_test = "DATA/S_MAP_test/"
 for dir in (dir_out_train, dir_out_test):
