@@ -333,8 +333,8 @@ def GET_DATE(file):
 # to 15 pixels any direction before returning it. This is probably to
 # prevent overfitting
 def READ_IMAGE(FN, NC_IN, NC_OUT):
-    IMG_A = np.load(FN[0])
-    IMG_B = np.load(FN[1])
+    IMG_A = np.nan_to_num(np.load(FN[0]))
+    IMG_B = np.nan_to_num(np.load(FN[1]))
     X, Y = np.random.randint(31), np.random.randint(31)
     if NC_IN != 1:
         IMG_A = np.pad(IMG_A, ((15, 15), (15, 15), (0, 0)), 'constant')
@@ -405,7 +405,7 @@ while i < len(LIST_INPUT) and j < len(LIST_OUTPUT):
     out_time = GET_DATE(output)
     
     # ignore if it has rotated more than ~ 90deg between stereo and farside
-    if abs(in_time - stereo_time) < timedelta(days=7):
+    if abs(in_time - stereo_time) > timedelta(days=7):
         del(LIST_INPUT[i])
     elif (abs(stereo_time - out_time) < timedelta(hours=2)):
         i += 1
@@ -426,10 +426,11 @@ LIST_OUTPUT = LIST_OUTPUT[:length]
 
 assert len(LIST_INPUT) == len(LIST_OUTPUT)
 
+print(f"Using {len(LIST_INPUT)} files.")
+
 # zips the data such that each element is a (input, output) pair
 LIST_TOTAL = list(zip(sorted(LIST_INPUT), sorted(LIST_OUTPUT)))
-
-
+shuffle(LIST_TOTAL)
 # creates a generator to use for training
 TRAIN_BATCH = MINI_BATCH(LIST_TOTAL, BATCH_SIZE, NC_IN, NC_OUT)
 
@@ -447,7 +448,6 @@ ERR_D_SUM = 0
 i = 0
 while GEN_ITERS <= NITERS:
     EPOCH, TRAIN_A, TRAIN_B = next(TRAIN_BATCH)
-    print(LIST_TOTAL[i])
     # input data set
     TRAIN_A = TRAIN_A.reshape((BATCH_SIZE, ISIZE, ISIZE, NC_IN))
     # output data set
