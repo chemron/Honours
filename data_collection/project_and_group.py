@@ -1,11 +1,9 @@
 import os
 import numpy as np
-import sunpy
-import sunpy.map
 from astropy.io import fits
-from astropy.coordinates import SkyCoord
-import argparse
 from get_equivalent_time import get_stereo_time
+from bisect import bisect_left
+from datetime import datetime, timedelta
 
 
 main_dir = "/home/adonea/Mona0028/adonea/cameron/Honours/"
@@ -13,7 +11,6 @@ data_dir = main_dir + "data_collection/DATA/"
 stereo_fits_dir = data_dir + "fits_stereo/"
 stereo_np_dir = data_dir + "np_STEREO_normalised/"
 smap_fits_dir = data_dir + "fits_phase_map"
-group_dir = main_dir + "DATA/"
 
 
 def get_stereo_header(filename):
@@ -34,6 +31,19 @@ def get_date(filename, mode):
         raise ValueError(f"mode must be one of \"stereo_np\", \"stereo_fits\","
                          f" or \"seismic_fits\" not \"{mode}\"")
     return datetime.strptime(filename, fmt)
+
+
+def get_filename(date, mode):
+    if mode == "stereo_np":
+        fmt = "%Y%m%d_%H%M%S_n5eua.npy"
+    elif mode == "stereo_fits":
+        fmt = "%Y%m%d_%H%M%S_n5eua.fts"
+    elif mode == "seismic_fits":
+        fmt = "PHASE_MAP_%Y.%m.%d_%H:%M:%S.fits"
+    else:
+        raise ValueError(f"mode must be one of \"stereo_np\", \"stereo_fits\","
+                         f" or \"seismic_fits\" not \"{mode}\"")
+    return date.strftime(fmt)
 
 
 def get_distance(theta_x, theta_y, D_0=200, R_0=1):
@@ -76,9 +86,18 @@ def helioc_to_heliographic(x, y, z, B_0=0, Phi_0=0, R_0=1, L_0=0):
     return (Theta, Phi_c)
 
 
-def get_closest(date, dates):
-    
-
+def get_closest(dates, date):
+    pos = bisect_left(dates, date)
+    if pos == 0:
+        return dates[0]
+    if pos == len(dates):
+        return dates[-1]
+    before = dates[pos - 1]
+    after = dates[pos]
+    if after - date < date - before:
+        return after
+    else:
+        return before
 
 
 smap_files = np.sort(os.listdir(smap_fits_dir))
@@ -86,12 +105,36 @@ stereo_files = np.sort(os.listdir(stereo_np_dir))
 stereo_dates = [get_date(f, "stereo_fits") for f in stereo_files]
 for filename in smap_files:
     smap_date = get_date(filename, "seismic_fits")
-    stereo_date = get_stereo_time(smap_date)
+    ideal_stereo_date = get_stereo_time(smap_date)
+    # ignore if it has rotated more than ~ 90deg between stereo and farside
+    # TODO: justify the 7 days
+    if abs(smap_date - ideal_stereo_date) > timedelta(days=7):
+        continue
+
+    actual_stereo_date = get_closest(ideal_stereo_date)
+    # ignore if actual stereo date is off by > 2 hours
+    if abs(ideal_stereo_date - actual_stereo_date) > timedelta(hours=2):
+        continue
+
+    stereo_np_name = get_filename(actual_stereo_date, "stereo_np")
+    stereo_fits_name = get_filename(actual_stereo_date, "stereo_fits")
+
+    # make group directory
+    date_str = smap_date.strftime("%Y.%m.%d_%H:%M:%S")
+    group_dir = f"{main_dir}DATA/{date_str}"
+    os.makedirs(group_dir)
+
+    # move stereo numpy file to DATA folder.
+    os.rename(stereo_np_dir + stereo_np_name, group_dir + stereo_np_name)
+    
+    # move phase_map
+
+    # save stereo header to 
 
 
-
-
-r_sun = stereo_header["RSUN"]  # radius of image of sun [arcsec]
-Phi_0 = 0  # set longetiude of observer to 0
-B_0 = stereo_header["HGLT_OBS"] * np.pi/180  # latitude of observer [rad]
-D_0 = stereo_header["DSUN_OBS"] / 696340000  # Distance to Sun [solar radii]
+# r_sun = stereo_header["RSUN"]  # radius of image of sun [arcsec]
+# Phi_0 = 0  # set longetiude of observer to 0
+# B_0 = stereo_header["HGLT_OBS"] * np.pi/180  # latitude of observer [rad]
+# D_0 = stereo_header["DSUN_OBS"] / 696340000  # Distance to Sun [solar radii]
+# stereo_header.tofile("ste_header")
+# h = fits.open("ste_header")[0].header
