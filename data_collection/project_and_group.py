@@ -17,7 +17,7 @@ stereo_np_dir = data_dir + "np_STEREO_normalised/"
 smap_fits_dir = data_dir + "fits_phase_map/"
 model = "P100_4/"
 mode = "STEREO_to_MAG/ITER0300000/"
-stereo_mag_dir = f"{main_dir}kim_gan/RESULTS{model}{mode}/
+stereo_mag_dir = f"{main_dir}kim_gan/RESULTS/{model}{mode}"
 
 
 def get_stereo_header(filename):
@@ -44,7 +44,7 @@ def get_date(filename, mode):
 def get_filename(date, mode):
     if mode == "stereo_np":
         fmt = "STE_%Y.%m.%d_%H:%M:%S.npy"
-    if mode == "stereo_mag":
+    elif mode == "stereo_mag":
         fmt = "MAG_%Y.%m.%d_%H:%M:%S.npy"
     elif mode == "stereo_fits":
         fmt = "%Y%m%d_%H%M%S_n4eua.fts"
@@ -52,7 +52,8 @@ def get_filename(date, mode):
         fmt = "PHASE_MAP_%Y.%m.%d_%H:%M:%S.fits"
     else:
         raise ValueError(f"mode must be one of \"stereo_np\", stereo_mag,"
-                         f"\"stereo_fits\", or \"seismic_fits\" not \"{mode}\"")
+                         f"\"stereo_fits\", or \"seismic_fits\" not"
+                         f"\"{mode}\"")
     return date.strftime(fmt)
 
 
@@ -133,8 +134,16 @@ smap_files = np.sort(os.listdir(smap_fits_dir))
 stereo_files = np.sort(os.listdir(stereo_np_dir))
 stereo_dates = [get_date(f, "stereo_np") for f in stereo_files]
 for smap_file in smap_files:
-    print(smap_file)
+    # make group directory
     smap_date = get_date(smap_file, "seismic_fits")
+    smap_date_str = smap_date.strftime("%Y.%m.%d_%H:%M:%S")
+    print(smap_date_str)
+    group_dir = f"{main_dir}DATA/{smap_date_str}/"
+    if os.path.exists(group_dir):
+        continue
+        print("group already exists")
+    os.makedirs(group_dir)
+
     ideal_stereo_date = get_stereo_time(smap_date)
     # ignore if it has rotated more than ~ 90deg between stereo and farside
     # TODO: justify the 7 days
@@ -158,11 +167,6 @@ for smap_file in smap_files:
     if not os.path.exists(stereo_fits_dir + stereo_fits_name):
         suffix = "n5eua.fts"
         stereo_fits_name = stereo_fits_name[:-len(suffix)] + suffix
-
-    # make group directory
-    smap_date_str = smap_date.strftime("%Y.%m.%d_%H:%M:%S")
-    group_dir = f"{main_dir}DATA/{smap_date_str}/"
-    os.makedirs(group_dir) if not os.path.exists(group_dir) else None
 
     # move stereo numpy file to DATA folder.
     # os.rename(stereo_np_dir + stereo_np_name, group_dir + stereo_np_name)
@@ -202,10 +206,10 @@ for smap_file in smap_files:
 
     # copy over stereo magnetograms
     copyfile(stereo_mag_dir + stereo_mag_name, group_dir + stereo_mag_name)
-    stereo_mag_data = np.open(stereo_mag_dir + stereo_mag_name)
+    stereo_mag_data = np.load(stereo_mag_dir + stereo_mag_name)
 
     # make plot
-    plt.figure(figsize=(20, 5))
+    plt.figure(1, figsize=(20, 5))
     plt.subplot(141)
     plt.imshow(stereo_data, origin="lower")
     plt.subplot(142)
@@ -218,3 +222,4 @@ for smap_file in smap_files:
     plt.imshow(stereo_mag_data, origin="lower", alpha=0.55)
     plt.tight_layout
     plt.savefig(f"{group_dir}comparison.png")
+    plt.close(1)
