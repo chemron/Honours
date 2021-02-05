@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 from shutil import copyfile
 from skimage.transform import warp
 import matplotlib.pyplot as plt
+import glob
 
 
 main_dir = "/home/adonea/Mona0028/adonea/cameron/Honours/"
@@ -47,7 +48,7 @@ def get_filename(date, mode):
     elif mode == "stereo_mag":
         fmt = "MAG_%Y.%m.%d_%H:%M:%S.npy"
     elif mode == "stereo_fits":
-        fmt = "%Y%m%d_%H%M%S_n4eua.fts"
+        fmt = "%Y%m%d_%H%M%S*"
     elif mode == "seismic_fits":
         fmt = "PHASE_MAP_%Y.%m.%d_%H:%M:%S.fits"
     else:
@@ -142,7 +143,6 @@ for smap_file in smap_files:
     if os.path.exists(group_dir):
         continue
         print("group already exists")
-    os.makedirs(group_dir)
 
     ideal_stereo_date = get_stereo_time(smap_date)
     # ignore if it has rotated more than ~ 90deg between stereo and farside
@@ -158,22 +158,22 @@ for smap_file in smap_files:
         print("Closest match is off by ")
         continue
 
+    os.makedirs(group_dir)
+
     stereo_np_name = get_filename(actual_stereo_date, "stereo_np")
     stereo_mag_name = get_filename(actual_stereo_date, "stereo_mag")
 
     stereo_data = np.load(f"{stereo_np_dir}{stereo_np_name}")
     stereo_fits_name = get_filename(actual_stereo_date, "stereo_fits")
-    #  match the 4 or 5 in filename
-    if not os.path.exists(stereo_fits_dir + stereo_fits_name):
-        suffix = "n5eua.fts"
-        stereo_fits_name = stereo_fits_name[:-len(suffix)] + suffix
+    # use glob to get suffix correct
+    stereo_fits_path = glob.glob(stereo_fits_dir + stereo_fits_name)[0]
 
     # move stereo numpy file to DATA folder.
     # os.rename(stereo_np_dir + stereo_np_name, group_dir + stereo_np_name)
     copyfile(stereo_np_dir + stereo_np_name, group_dir + stereo_np_name)
 
     # get stereo header
-    hdul = fits.open(stereo_fits_dir + stereo_fits_name, memmap=False, ext=0)
+    hdul = fits.open(stereo_fits_path, memmap=False, ext=0)
     hdul.verify("fix")
     stereo_header = hdul[0].header
     stereo_header.tofile(f"{group_dir}ste_header", overwrite=True)
