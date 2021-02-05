@@ -9,12 +9,15 @@ from skimage.transform import warp
 import matplotlib.pyplot as plt
 
 
-# main_dir = "/home/adonea/Mona0028/adonea/cameron/Honours/"
-main_dir = "../"
+main_dir = "/home/adonea/Mona0028/adonea/cameron/Honours/"
+# main_dir = "../"
 data_dir = main_dir + "data_collection/DATA/"
 stereo_fits_dir = data_dir + "fits_STEREO/"
 stereo_np_dir = data_dir + "np_STEREO_normalised/"
 smap_fits_dir = data_dir + "fits_phase_map/"
+model = "P100_4/"
+mode = "STEREO_to_MAG/ITER0300000/"
+stereo_mag_dir = f"{main_dir}kim_gan/RESULTS{model}{mode}/
 
 
 def get_stereo_header(filename):
@@ -41,13 +44,15 @@ def get_date(filename, mode):
 def get_filename(date, mode):
     if mode == "stereo_np":
         fmt = "STE_%Y.%m.%d_%H:%M:%S.npy"
+    if mode == "stereo_mag":
+        fmt = "MAG_%Y.%m.%d_%H:%M:%S.npy"
     elif mode == "stereo_fits":
         fmt = "%Y%m%d_%H%M%S_n4eua.fts"
     elif mode == "seismic_fits":
         fmt = "PHASE_MAP_%Y.%m.%d_%H:%M:%S.fits"
     else:
-        raise ValueError(f"mode must be one of \"stereo_np\", \"stereo_fits\","
-                         f" or \"seismic_fits\" not \"{mode}\"")
+        raise ValueError(f"mode must be one of \"stereo_np\", stereo_mag,"
+                         f"\"stereo_fits\", or \"seismic_fits\" not \"{mode}\"")
     return date.strftime(fmt)
 
 
@@ -145,6 +150,8 @@ for smap_file in smap_files:
         continue
 
     stereo_np_name = get_filename(actual_stereo_date, "stereo_np")
+    stereo_mag_name = get_filename(actual_stereo_date, "stereo_mag")
+
     stereo_data = np.load(f"{stereo_np_dir}{stereo_np_name}")
     stereo_fits_name = get_filename(actual_stereo_date, "stereo_fits")
     #  match the 4 or 5 in filename
@@ -193,14 +200,21 @@ for smap_file in smap_files:
                     output_shape=(1024, 1024), map_args=map_args)
     np.save(f"{group_dir}smap_{smap_date_str}.npy", new_smap)
 
+    # copy over stereo magnetograms
+    copyfile(stereo_mag_dir + stereo_mag_name, group_dir + stereo_mag_name)
+    stereo_mag_data = np.open(stereo_mag_dir + stereo_mag_name)
+
     # make plot
-    plt.figure(figsize=(15, 5))
-    plt.subplot(131)
+    plt.figure(figsize=(20, 5))
+    plt.subplot(141)
     plt.imshow(stereo_data, origin="lower")
-    plt.subplot(132)
-    plt.imshow(stereo_data, origin="lower")
-    plt.imshow(new_smap, origin="lower", alpha=0.55)
-    plt.subplot(133)
+    plt.subplot(142)
     plt.imshow(new_smap, origin="lower")
+    plt.subplot(143)
+    plt.imshow(stereo_mag_data, origin="lower")
+    plt.subplot(144)
+    plt.imshow(stereo_data, origin="lower", alpha=0.55)
+    plt.imshow(new_smap, origin="lower", alpha=0.55)
+    plt.imshow(stereo_mag_data, origin="lower", alpha=0.55)
     plt.tight_layout
     plt.savefig(f"{group_dir}comparison.png")
