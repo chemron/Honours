@@ -3,7 +3,6 @@ import os
 import glob
 import time
 from random import shuffle
-from get_equivalent_time import get_stereo_time
 
 import tensorflow.keras.backend as K
 from tensorflow.keras.models import Model
@@ -14,7 +13,7 @@ from tensorflow.keras.layers import Concatenate
 from tensorflow.keras.layers import LeakyReLU
 from tensorflow.keras.initializers import RandomNormal
 from tensorflow.keras.optimizers import Adam
-from datetime import datetime, timedelta
+from datetime import datetime
 import argparse
 import tensorflow.compat.v1 as tf
 
@@ -81,8 +80,8 @@ TRIAL_NAME = args.model_name
 
 MODE = INPUT_DATA + '_to_' + OUTPUT_DATA  # folder name for saving the model
 
-IMAGE_PATH_INPUT = f'./DATA/{INPUT_DATA}_train/*'  # input file path
-IMAGE_PATH_OUTPUT = f'./DATA/{OUTPUT_DATA}/*'  # ouptut file path
+DATA_path = "/home/adonea/Mona0028/adonea/cameron/Honours/DATA/"
+
 
 # make a folder for the trial if it doesn't already exist
 MODEL_PATH_MAIN = './MODELS/' + TRIAL_NAME + '/'
@@ -315,11 +314,6 @@ NET_G_TRAIN = K.function([REAL_A, REAL_B],
                          TRAINING_UPDATES_G)
 
 
-# returns list of files that match FILE_PATTERN
-def LOAD_DATA(FILE_PATTERN):
-    return glob.glob(FILE_PATTERN)
-
-
 def GET_DATE(file):
     filename = file.split("/")[-1]  # filename is at end of file path
     date_str = filename.split("_")  # date string is after first "_"
@@ -380,56 +374,25 @@ def MINI_BATCH(DATA_AB, BATCH_SIZE, NC_IN, NC_OUT):
         TMP_SIZE = yield EPOCH, DATA_A, DATA_B
 
 
-# input data
-LIST_INPUT = LOAD_DATA(IMAGE_PATH_INPUT)
-# output data
-LIST_OUTPUT = LOAD_DATA(IMAGE_PATH_OUTPUT)
-
-# sort lists based on timestamp
-LIST_OUTPUT = sorted(LIST_OUTPUT)
-LIST_INPUT = sorted(LIST_INPUT)
+# returns list of files that match FILE_PATTERN
+def LOAD_DATA(FILE_PATTERN):
+    return glob.glob(FILE_PATTERN)
 
 
-# TODO: align dates
-i = 0  # index of LIST_INPUT
-j = 0  # index of LIST_OUTPUT
-
-# only keep images that are in both input and output
-while i < len(LIST_INPUT) and j < len(LIST_OUTPUT):
-    input = LIST_INPUT[i]
-    in_time = GET_DATE(input)
-    # equivalent stereo time due to rotation
-    stereo_time = get_stereo_time(in_time)
-
-    output = LIST_OUTPUT[j]
-    out_time = GET_DATE(output)
-    
-    # ignore if it has rotated more than ~ 90deg between stereo and farside
-    if abs(in_time - stereo_time) > timedelta(days=7):
-        del(LIST_INPUT[i])
-    elif (abs(stereo_time - out_time) < timedelta(hours=2)):
-        i += 1
-        j += 1
-    # if input is after output, delete output:
-    elif stereo_time > out_time:
-        del(LIST_OUTPUT[j])
-    # if input is before output, delete input:
-    else:
-        # in_time < out_time:
-        del(LIST_INPUT[i])
+def GRAB_DATA(folder):
+    for folder in DATA_LIST:
+        smap = glob.glob(f"{folder}/smap_*.npy")
+        mag = glob.glob(f"{folder}/MAG_*.npy")
+        smap = glob.glob(f"{folder}/smap_*.npy")
+        if len(mag) == 0 or len(smap) == 0:
+            continue
+        yield (smap[0], mag[0])
 
 
-# trim ends of lists so they are the same size
-length = min(i, j)
-LIST_INPUT = LIST_INPUT[:length]
-LIST_OUTPUT = LIST_OUTPUT[:length]
+DATA_LIST = glob.glob(DATA_path + "*")
+LIST_TOTAL = list(GRAB_DATA(DATA_LIST))
 
-assert len(LIST_INPUT) == len(LIST_OUTPUT)
 
-print(f"Using {len(LIST_INPUT)} files.")
-
-# zips the data such that each element is a (input, output) pair
-LIST_TOTAL = list(zip(sorted(LIST_INPUT), sorted(LIST_OUTPUT)))
 shuffle(LIST_TOTAL)
 # creates a generator to use for training
 TRAIN_BATCH = MINI_BATCH(LIST_TOTAL, BATCH_SIZE, NC_IN, NC_OUT)

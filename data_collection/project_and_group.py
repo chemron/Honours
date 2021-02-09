@@ -4,7 +4,7 @@ from astropy.io import fits
 from get_equivalent_time import get_stereo_time
 from bisect import bisect_left
 from datetime import datetime, timedelta
-from shutil import copyfile
+from shutil import copyfile, rmtree
 from skimage.transform import warp
 import matplotlib.pyplot as plt
 import glob
@@ -189,12 +189,17 @@ for smap_file in smap_files:
     smap_header.tofile(f"{group_dir}smap_header", overwrite=True)
 
     # get parameters
-    L_0 = smap_header["REF_L0"] * np.pi/180
-    B_0 = smap_header["REF_B0"] * np.pi/180
-    r_sun = stereo_header["RSUN"]
-    Phi_0 = 0
-    B_0 = stereo_header["HGLT_OBS"] * np.pi/180
-    D_0 = stereo_header["DSUN_OBS"] / 696340000  # in terms of radius
+    try:
+        L_0 = smap_header["REF_L0"] * np.pi/180
+        B_0 = smap_header["REF_B0"] * np.pi/180
+        r_sun = stereo_header["RSUN"]
+        Phi_0 = 0
+        B_0 = stereo_header["HGLT_OBS"] * np.pi/180
+        D_0 = stereo_header["DSUN_OBS"] / 696340000  # in terms of radius
+    except TypeError:
+        print("Missing args")
+        rmtree(group_dir)
+        continue
 
     map_args = {"r_sun": r_sun, "D_0": D_0, "R_0": 1,
                 "B_0": B_0,  "Phi_0": Phi_0, "L_0": L_0}
