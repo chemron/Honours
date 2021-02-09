@@ -1,0 +1,1 @@
+python loss.py <(awk '{print $4, $9, $11, $13}' MODELS/P100_1/iter_loss.txt)

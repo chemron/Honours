@@ -80,7 +80,7 @@ TRIAL_NAME = args.model_name
 
 MODE = INPUT_DATA + '_to_' + OUTPUT_DATA  # folder name for saving the model
 
-DATA_path = "/home/adonea/Mona0028/adonea/cameron/Honours/DATA/"
+DATA_path = "/home/adonea/Mona0028/adonea/cameron/Honours/DATA/TRAIN/"
 
 
 # make a folder for the trial if it doesn't already exist
