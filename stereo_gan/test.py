@@ -38,15 +38,14 @@ parser.add_argument("--display_iter",
                     type=int,
                     default=20000
                     )
+parser.add_argument("--start_iter",
+                    help="Which iteration to start from",
+                    type=int,
+                    default=0
 parser.add_argument("--max_iter",
                     help="total number of iterations",
                     type=int,
                     default=500000
-                    )
-parser.add_argument("--input",
-                    help="input dataset",
-                    type=str,
-                    default="AIA"
                     )
 parser.add_argument("--func",
                     default=""
@@ -57,15 +56,18 @@ args = parser.parse_args()
 # set parameters
 SLEEP_TIME = 1000
 DISPLAY_ITER = args.display_iter
+START_ITER = args.start_iter
+if START_ITER == 0:
+    START_ITER = DISPLAY_ITER
 MAX_ITER = args.max_iter
-MODE = 'AIA_to_HMI'
-INPUT = args.input
-OUTPUT = 'MAG'
+MODE = 'S_MAP_to_MAG'
+INPUT = "smap"
+OUTPUT = 'SMAG'
 OP1 = f'{INPUT.upper()}_to_{OUTPUT}'
 
 TRIAL_NAME = args.model_name
 
-TEST_PATH = f'./DATA/{INPUT.lower()}_test{args.func}/*.npy'
+TEST_PATH = "/home/adonea/Mona0028/adonea/cameron/Honours/DATA/TEST/"
 
 ISIZE = 1024  # input size
 NC_IN = 1  # number of channels in the output
@@ -73,15 +75,12 @@ NC_OUT = 1  # number of channels in the input
 BATCH_SIZE = 1  # batch size
 
 
-# finds and sorts the filenames for INPUT1, INPUT2 and OUTPUT respectively
-IMAGE_LIST1 = sorted(glob.glob(TEST_PATH))
-
-RESULT_PATH_MAIN = './RESULTS/' + TRIAL_NAME + '/'
-# os.mkdir(RESULT_PATH_MAIN) if not os.path.exists(RESULT_PATH_MAIN) else None
-
-# file path for the results of INPUT1 to OUTPUT (generating HMI from nearside)
-RESULT_PATH1 = RESULT_PATH_MAIN + OP1 + '/'
-os.makedirs(RESULT_PATH1) if not os.path.exists(RESULT_PATH1) else None
+def GRAB_DATA(folders):
+    for folder in folders:
+        smap = glob.glob(f"{folder}/{INPUT}_*.npy")
+        if len(smap) == 0:
+            continue
+        yield smap[0]
 
 
 def GET_DATE_STR(file):
@@ -92,9 +91,25 @@ def GET_DATE_STR(file):
     return date_str
 
 
+DATA_LIST = glob.glob(TEST_PATH + "*")
+IMAGE_LIST1 = list(GRAB_DATA(DATA_LIST))
+
+
+
+# finds and sorts the filenames for INPUT1, INPUT2 and OUTPUT respectively
+# IMAGE_LIST1 = sorted(glob.glob(TEST_PATH))
+
+RESULT_PATH_MAIN = './RESULTS/' + TRIAL_NAME + '/'
+# os.mkdir(RESULT_PATH_MAIN) if not os.path.exists(RESULT_PATH_MAIN) else None
+
+# file path for the results of INPUT1 to OUTPUT (generating HMI from nearside)
+RESULT_PATH1 = RESULT_PATH_MAIN + OP1 + '/'
+os.makedirs(RESULT_PATH1) if not os.path.exists(RESULT_PATH1) else None
+
+
 # during training, the model was saved every DISPLAY_ITER steps
 # as such, test every DISPLAY_ITER.
-ITER = DISPLAY_ITER
+ITER = START_ITER
 while ITER <= MAX_ITER:
 
     SITER = '%07d' % ITER  # string representing the itteration
