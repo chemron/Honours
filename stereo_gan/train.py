@@ -379,11 +379,10 @@ def LOAD_DATA(FILE_PATTERN):
     return glob.glob(FILE_PATTERN)
 
 
-def GRAB_DATA(folder):
-    for folder in DATA_LIST:
+def GRAB_DATA(folders):
+    for folder in folders:
         smap = glob.glob(f"{folder}/smap_*.npy")
         mag = glob.glob(f"{folder}/MAG_*.npy")
-        smap = glob.glob(f"{folder}/smap_*.npy")
         if len(mag) == 0 or len(smap) == 0:
             continue
         yield (smap[0], mag[0])
