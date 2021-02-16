@@ -42,6 +42,7 @@ parser.add_argument("--start_iter",
                     help="Which iteration to start from",
                     type=int,
                     default=0
+                    )
 parser.add_argument("--max_iter",
                     help="total number of iterations",
                     type=int,
