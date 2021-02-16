@@ -55,6 +55,11 @@ parser.add_argument("--max_iter",
                     type=int,
                     default=500000
                     )
+parser.add_argument("--batch_size",
+                    type=int,
+                    default=1
+                    )
+
 args = parser.parse_args()
 
 # Hyper parameters
@@ -70,7 +75,7 @@ OUTPUT_DATA = 'MAG'
 ISIZE = 1024  # height of the image
 NC_IN = 1  # number of input channels (1 for greyscale, 3 for RGB)
 NC_OUT = 1  # number of output channels (1 for greyscale, 3 for RGB)
-BATCH_SIZE = 1  # number of images in each batch
+BATCH_SIZE = args.batch_size  # number of images in each batch
 # max layers in the discriminator not including sigmoid activation:
 # 1 for 16, 2 for 34, 3 for 70, 4 for 142, and 5 for 286 (receptive field size)
 MAX_LAYERS = 3
