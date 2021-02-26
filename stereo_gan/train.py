@@ -13,7 +13,11 @@ from tensorflow.keras.layers import Concatenate
 from tensorflow.keras.layers import LeakyReLU
 from tensorflow.keras.initializers import RandomNormal
 from tensorflow.keras.optimizers import Adam
+<<<<<<< HEAD
 from datetime import datetime, timedelta
+=======
+from datetime import datetime
+>>>>>>> 643d9d53f4fc7518d8790c739711eff6be456a8f
 import argparse
 import tensorflow.compat.v1 as tf
 
@@ -265,6 +269,7 @@ def UNET_G(ISIZE, NC_IN, NC_OUT, FIXED_INPUT_SIZE=True):
     return Model(inputs=INPUT, outputs=[X])
 
 
+<<<<<<< HEAD
 def get_mask(size):
     w = h = size
     center = (int(w/2), int(h/2))
@@ -275,6 +280,8 @@ def get_mask(size):
     return mask
 
 
+=======
+>>>>>>> 643d9d53f4fc7518d8790c739711eff6be456a8f
 # The discriminator model
 NET_D = BASIC_D(ISIZE, NC_IN, NC_OUT, MAX_LAYERS)
 # The generator model
@@ -394,25 +401,36 @@ def LOAD_DATA(FILE_PATTERN):
     return glob.glob(FILE_PATTERN)
 
 
+<<<<<<< HEAD
 def GRAB_DATA(folders, tolerence=timedelta(days=3)):
+=======
+def GRAB_DATA(folders):
+>>>>>>> 643d9d53f4fc7518d8790c739711eff6be456a8f
     for folder in folders:
         smap = glob.glob(f"{folder}/smap_*.npy")
         mag = glob.glob(f"{folder}/MAG_*.npy")
         if len(mag) == 0 or len(smap) == 0:
             continue
+<<<<<<< HEAD
         smap = smap[0]
         mag = mag[0]
         smap_date = GET_DATE(smap)
         mag_date = GET_DATE(mag)
         if abs(smap_date - mag_date) > tolerence:
             continue
+=======
+>>>>>>> 643d9d53f4fc7518d8790c739711eff6be456a8f
         yield (smap[0], mag[0])
 
 
 DATA_LIST = glob.glob(DATA_path + "*")
 LIST_TOTAL = list(GRAB_DATA(DATA_LIST))
+<<<<<<< HEAD
 print(LIST_TOTAL)
 print(f"Training on {len(LIST_TOTAL)} images.")
+=======
+
+>>>>>>> 643d9d53f4fc7518d8790c739711eff6be456a8f
 
 shuffle(LIST_TOTAL)
 # creates a generator to use for training
