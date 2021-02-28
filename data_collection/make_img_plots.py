@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 path = "/home/adonea/Mona0028/adonea/cameron/Honours/DATA"
-folders = [f"{path}/small_test"]  # , "DATA/TRAIN"]
+folders = [f"{path}/TRAIN", f"{path}/TEST"]
 types = ["MAG", "STE", "smap"]
 types_joined = ["MAG", "STE", "smap"]
 size = 1024
@@ -51,7 +51,7 @@ def load_numpy(file_strs):
 
 
 for folder in folders:
-    sub_folders = glob.glob(f"{folder}/*")
+    sub_folders = np.sort(glob.glob(f"{folder}/*"))
     for sub_folder in sub_folders:
         individual_file_strs = list([f"{sub_folder}/{type}*.npy"
                                      for type in types])
