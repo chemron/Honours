@@ -59,6 +59,15 @@ parser.add_argument("--batch_size",
                     type=int,
                     default=1
                     )
+parser.add_argument("--tol",
+                    help="tolerance on image time difference in days",
+                    type=float,
+                    default=3
+                    )
+parser.add_argument("--mask",
+                    help="use mask on generator output",
+                    action='store_true'
+                    )
 
 args = parser.parse_args()
 
@@ -394,7 +403,7 @@ def LOAD_DATA(FILE_PATTERN):
     return glob.glob(FILE_PATTERN)
 
 
-def GRAB_DATA(folders, tolerence=timedelta(days=3)):
+def GRAB_DATA(folders, tolerance=timedelta(days=3)):
     for folder in folders:
         smap = glob.glob(f"{folder}/smap_*.npy")
         mag = glob.glob(f"{folder}/MAG_*.npy")
@@ -404,14 +413,13 @@ def GRAB_DATA(folders, tolerence=timedelta(days=3)):
         mag = mag[0]
         smap_date = GET_DATE(smap)
         mag_date = GET_DATE(mag)
-        if abs(smap_date - mag_date) > tolerence:
+        if abs(smap_date - mag_date) > tolerance:
             continue
         yield (smap, mag)
 
 
 DATA_LIST = glob.glob(DATA_path + "*")
-LIST_TOTAL = list(GRAB_DATA(DATA_LIST))
-print(LIST_TOTAL)
+LIST_TOTAL = list(GRAB_DATA(DATA_LIST, tolerance=timedelta(days=args.tol)))
 print(f"Training on {len(LIST_TOTAL)} images.")
 
 shuffle(LIST_TOTAL)
