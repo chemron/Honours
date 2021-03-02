@@ -7,11 +7,14 @@ import cv2
 
 w = h = 1024  # desired width and height of output
 n = 50
-func = ''
+func = '_abs'
 mode = 'HMI'
 np_dir = f"DATA/np_{mode}/"
 normal_np_dir = f"DATA/np_{mode}_normalised{func}/"
-os.makedirs(normal_np_dir) if not os.path.exists(normal_np_dir) else None
+if os.path.exists(normal_np_dir):
+    raise NameError(f"Path: \"{normal_np_dir}\" already exists")
+else:
+    os.makedirs(normal_np_dir)
 
 data = np.sort(os.listdir(np_dir))
 
@@ -31,7 +34,11 @@ for i in range(len(data)):
     img = np.load(filename)
     img = img/clip_max
     img = img.clip(-1, 1)
-    img = np.sign(img) * (np.abs(img) ** (1/2))
+    if func == "_abs":
+        img = (np.abs(img) ** (1/2))
+    else:
+        img = np.sign(img)*(np.abs(img) ** (1/2))
+
     try:
         img = cv2.resize(img, dsize=(w, h))
         np.save(normal_np_dir + name, img)
