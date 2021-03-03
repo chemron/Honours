@@ -81,7 +81,7 @@ def GRAB_DATA(folders):
         smap = glob.glob(f"{folder}/{INPUT}_*.npy")
         if len(smap) == 0:
             continue
-        yield smap[0]
+        yield folder, smap[0]
 
 
 def GET_DATE_STR(file):
@@ -119,9 +119,9 @@ while ITER <= MAX_ITER:
     MODEL_NAME = './MODELS/' + TRIAL_NAME + '/' + MODE + '/' + MODE + \
         '_ITER' + SITER + '.h5'
 
-    # file path to save the generated outputs from INPUT1 (nearside)
-    SAVE_PATH1 = RESULT_PATH1 + 'ITER' + SITER + '/'
-    os.mkdir(SAVE_PATH1) if not os.path.exists(SAVE_PATH1) else None
+    # # file path to save the generated outputs from INPUT1 (nearside)
+    # SAVE_PATH1 = RESULT_PATH1 + 'ITER' + SITER + '/'
+    # os.mkdir(SAVE_PATH1) if not os.path.exists(SAVE_PATH1) else None
 
     EX = 0
     while EX < 1:
@@ -145,13 +145,14 @@ while ITER <= MAX_ITER:
         return np.concatenate(output, axis=0)
 
     for i in range(len(IMAGE_LIST1)):
-        DATE = GET_DATE_STR(IMAGE_LIST1[i])
+        folder, image = IMAGE_LIST1[i]
+        DATE = GET_DATE_STR(image)
 
         if f'{OUTPUT}_{DATE}.npy' not in os.listdir(SAVE_PATH1):
             SAVE_NAME = SAVE_PATH1 + OUTPUT + "_" + DATE
 
             # input image
-            IMG = np.load(IMAGE_LIST1[i]) * 2 - 1
+            IMG = np.load(image) * 2 - 1
 
             # reshapes IMG tensor to (BATCH_SIZE, ISIZE, ISIZE, NC_IN)
             IMG.shape = (BATCH_SIZE, ISIZE, ISIZE, NC_IN)
@@ -162,7 +163,7 @@ while ITER <= MAX_ITER:
                 FAKE.shape = (ISIZE, ISIZE)
             else:
                 FAKE.shape = (ISIZE, ISIZE, NC_OUT)
-            SAVE_NAME = SAVE_PATH1 + OUTPUT + "_" + DATE
+            SAVE_NAME = f'{folder}/{model_name}_{ITER}_{DATE}'
             np.save(SAVE_NAME, FAKE)
         else:
             print("already downloaded")
