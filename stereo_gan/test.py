@@ -146,10 +146,12 @@ while ITER <= MAX_ITER:
 
     for i in range(len(IMAGE_LIST1)):
         folder, image = IMAGE_LIST1[i]
+        folder += f'/{TRIAL_NAME}/'
+        os.makedirs(folder) if not os.path.exists(folder) else None
         DATE = GET_DATE_STR(image)
 
-        if f'{OUTPUT}_{DATE}.npy' not in os.listdir(SAVE_PATH1):
-            SAVE_NAME = SAVE_PATH1 + OUTPUT + "_" + DATE
+        if f'{ITER}_{OUTPUT}_{DATE}.npy' not in os.listdir(folder):
+            SAVE_NAME = f"{folder}{ITER}_{OUTPUT}_{DATE}"
 
             # input image
             IMG = np.load(image) * 2 - 1
@@ -163,7 +165,6 @@ while ITER <= MAX_ITER:
                 FAKE.shape = (ISIZE, ISIZE)
             else:
                 FAKE.shape = (ISIZE, ISIZE, NC_OUT)
-            SAVE_NAME = f'{folder}/{model_name}_{ITER}_{DATE}'
             np.save(SAVE_NAME, FAKE)
         else:
             print("already downloaded")
