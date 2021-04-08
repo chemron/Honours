@@ -114,12 +114,15 @@ def get_area(hpc_coord, cdelt, D0):
 
 
   # distance to the centre of sun (in solar radii)
-def get_pixel_areas(header, shape):
+def get_pixel_areas(header, shape, cdelt=None, c_ref=None):
     D_0 = header["DSUN_OBS"] / 696340000
     # pixel coordinates of reference pixel
-    c_ref = header["CRPIX1"], header["CRPIX2"]
+    if c_ref is None:
+        c_ref = header["CRPIX1"], header["CRPIX2"]
+
     # pixel size (x and y) in arc seconds
-    cdelt = [header["CDELT1"], header["CDELT2"]]
+    if cdelt is None:
+        cdelt = [header["CDELT1"], header["CDELT2"]]
      
     # get pixel coordinates
     pix_coord = get_pix_coord(shape)
