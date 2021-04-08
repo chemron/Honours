@@ -7,7 +7,9 @@ import os
 # parameters
 
 folder = "DATA/fits_HMI/"
-save_file = "DATA/unsigned_flux/unsigned_flux_hmi.txt"
+save_folder = "DATA/unsigned_flux/"
+os.makedirs(save_folder) if not os.path.exists(save_folder) else None
+save_file = f"{save_folder}unsigned_flux_hmi.txt"
 if os.path.exists(save_file):
     print(f"File {save_file} already exists. Removing now.")
     os.remove(save_file)
