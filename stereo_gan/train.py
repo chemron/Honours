@@ -64,6 +64,11 @@ parser.add_argument("--tol",
                     type=float,
                     default=3
                     )
+parser.add_argument("--kernel",
+                    help="kernel size",
+                    type=int,
+                    default=4
+                    )
 parser.add_argument("--mask",
                     help="use mask on generator output",
                     action='store_true'
@@ -152,7 +157,7 @@ def BASIC_D(ISIZE, NC_IN, NC_OUT, MAX_LAYERS):
         N_FEATURE = 1  # number of filters to use
         # apply sigmoid activation
         L = DN_CONV(N_FEATURE,
-                    kernel_size=1,
+                    kernel_size=args.kernel,
                     padding='same',
                     activation='sigmoid'
                     )(INPUT)
@@ -161,7 +166,7 @@ def BASIC_D(ISIZE, NC_IN, NC_OUT, MAX_LAYERS):
         N_FEATURE = 64  # number of filters to use
         # apply convolution
         L = DN_CONV(N_FEATURE,
-                    kernel_size=4,
+                    kernel_size=args.kernel,
                     strides=2,
                     padding="same"
                     )(INPUT)
@@ -173,7 +178,7 @@ def BASIC_D(ISIZE, NC_IN, NC_OUT, MAX_LAYERS):
             N_FEATURE *= 2  # double the number of filters
             # Apply convolution
             L = DN_CONV(N_FEATURE,
-                        kernel_size=4,
+                        kernel_size=args.kernel,
                         strides=2,
                         padding="same"
                         )(L)
@@ -185,7 +190,7 @@ def BASIC_D(ISIZE, NC_IN, NC_OUT, MAX_LAYERS):
         N_FEATURE *= 2  # double the number of filters
         L = ZeroPadding2D(1)(L)  # pads the model with 0s with a thickness of 1
         # Apply convolution
-        L = DN_CONV(N_FEATURE, kernel_size=4, padding="valid")(L)
+        L = DN_CONV(N_FEATURE, kernel_size=args.kernel, padding="valid")(L)
         # normalise
         L = BATNORM()(L, training=1)
         # Apply leaky ReLU activation with a slope of 0.2
@@ -195,7 +200,7 @@ def BASIC_D(ISIZE, NC_IN, NC_OUT, MAX_LAYERS):
         L = ZeroPadding2D(1)(L)  # pads the model with 0s with a thickness of 1
         # Apply sigmoid activation
         L = DN_CONV(N_FEATURE,
-                    kernel_size=4,
+                    kernel_size=args.kernel,
                     padding="valid",
                     activation='sigmoid'
                     )(L)
@@ -219,7 +224,7 @@ def UNET_G(ISIZE, NC_IN, NC_OUT, FIXED_INPUT_SIZE=True):
             NF_OUT = NF_IN
         # Apply convolution
         X = DN_CONV(NF_NEXT,
-                    kernel_size=4,
+                    kernel_size=args.kernel,
                     strides=2,
                     # don't use a bias if batch normalisation will be done
                     # later, or if s > 2
@@ -250,7 +255,7 @@ def UNET_G(ISIZE, NC_IN, NC_OUT, FIXED_INPUT_SIZE=True):
 
         # Apply deconvolution
         X = UP_CONV(NF_OUT,
-                    kernel_size=4,
+                    kernel_size=args.kernel,
                     strides=2,
                     use_bias=not USE_BATNORM
                     )(X)
