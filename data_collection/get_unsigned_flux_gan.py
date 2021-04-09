@@ -1,4 +1,5 @@
 from pixel_area import get_pixel_areas
+from normalise_HMI_p import clip_max
 import numpy as np
 from astropy.io import fits
 import os
@@ -10,11 +11,14 @@ os.makedirs(save_dir) if not os.path.exists(save_dir) else None
 save_file = f"{save_dir}unsigned_flux_gan"
 modes = ["batch", "default", "low_tol", "ste"]
 mode_strs = ["p100_batch_1/100000*", "P100_default/200000*", "P100_low_tol/200000*", "MAG_*" ]
-if os.path.exists(save_file):
-    print(f"File {save_file} already exists. Removing now.")
-    os.remove(save_file)
 
-for folders in foler:
+for mode in modes:
+    save_str = f"{save_file}_{mode}.txt"
+    if os.path.exists(save_str):
+        print(f"File {save_str} already exists. Removing now.")
+        os.remove(save_str)
+
+for folder in folders:
     for date in np.sort(os.listdir(folder)):
         try:
             hdul = fits.open(f"{folder}{date}/ste_header", memmap=False, ext=0)
@@ -25,6 +29,10 @@ for folders in foler:
                 mode_str = mode_strs[i]
                 data_file = glob.glob(f"{folder}{date}/{mode_str}")[0]
                 data = np.load(data_file)
+
+                # undo normalisation
+                data = np.abs(data)**2
+                data *= clip_max
 
                 shape = data.shape
 
