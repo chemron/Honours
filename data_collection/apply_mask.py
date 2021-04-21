@@ -1,7 +1,7 @@
 import glob
 import numpy as np
 
-path = "/home/adonea/Mona0028/adonea/cameron/Honours/DATA"
+path = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATA"
 folders = [f"{path}/TRAIN", f"{path}/TEST"]
 types = ["MAG", "smap", "STE"]
 size = 1024

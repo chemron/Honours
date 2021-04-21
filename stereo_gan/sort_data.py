@@ -2,9 +2,9 @@ import numpy as np
 import os
 from shutil import move
 
-dir_in = "/home/adonea/Mona0028/adonea/cameron/Honours/DATpythnA/"
-dir_out_train = "/home/adonea/Mona0028/adonea/cameron/Honours/DATA/TRAIN/"
-dir_out_test = "/home/adonea/Mona0028/adonea/cameron/Honours/DATA/TEST/"
+dir_in = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATpythnA/"
+dir_out_train = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATA/TRAIN/"
+dir_out_test = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATA/TEST/"
 for dir in (dir_out_train, dir_out_test):
     os.makedirs(dir) if not os.path.exists(dir) else None
 

@@ -68,7 +68,7 @@ OP1 = f'{INPUT.upper()}_to_{OUTPUT}'
 
 TRIAL_NAME = args.model_name
 
-TEST_PATH = "/home/adonea/Mona0028/adonea/cameron/Honours/DATA/TEST/"
+TEST_PATH = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATA/TEST/"
 
 ISIZE = 1024  # input size
 NC_IN = 1  # number of channels in the output
@@ -96,7 +96,6 @@ DATA_LIST = glob.glob(TEST_PATH + "*")
 IMAGE_LIST1 = list(GRAB_DATA(DATA_LIST))
 
 
-
 # finds and sorts the filenames for INPUT1, INPUT2 and OUTPUT respectively
 # IMAGE_LIST1 = sorted(glob.glob(TEST_PATH))
 
@@ -111,8 +110,8 @@ os.makedirs(RESULT_PATH1) if not os.path.exists(RESULT_PATH1) else None
 # during training, the model was saved every DISPLAY_ITER steps
 # as such, test every DISPLAY_ITER.
 ITER = START_ITER
-while ITER <= MAX_ITER:
 
+while ITER <= MAX_ITER:
     SITER = '%07d' % ITER  # string representing the itteration
 
     # file path for the model of current itteration

@@ -99,7 +99,7 @@ TRIAL_NAME = args.model_name
 
 MODE = INPUT_DATA + '_to_' + OUTPUT_DATA  # folder name for saving the model
 
-DATA_path = "/home/adonea/Mona0028/adonea/cameron/Honours/DATA/TRAIN/"
+DATA_path = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATA/TRAIN/"
 
 
 # make a folder for the trial if it doesn't already exist
@@ -214,7 +214,6 @@ def UNET_G(ISIZE, NC_IN, NC_OUT, FIXED_INPUT_SIZE=True):
 
     def BLOCK(X, S, NF_IN, USE_BATNORM=True, NF_OUT=None, NF_NEXT=None):
         # Encoder: (decreasing size)
-
         assert S >= 2 and S % 2 == 0
         if NF_NEXT is None:  # number of filters in the next layer?
             # set number of filters to twice the number of filters in the
@@ -238,10 +237,12 @@ def UNET_G(ISIZE, NC_IN, NC_OUT, FIXED_INPUT_SIZE=True):
             # apply leaky ReLU with a slope of 0,2
             X2 = LEAKY_RELU(0.2)(X)
             # continue recursion until size = 2, halving size each time
+
             X2 = BLOCK(X2, S//2, NF_NEXT)
             # combine X and X2
             # this gives the "skip connections" between the encoder layers
             # and decoder layers.
+
             X = Concatenate(axis=CH_AXIS)([X, X2])
 
         # Decoder: (Increasing size)
@@ -255,7 +256,7 @@ def UNET_G(ISIZE, NC_IN, NC_OUT, FIXED_INPUT_SIZE=True):
 
         # Apply deconvolution
         X = UP_CONV(NF_OUT,
-                    kernel_size=args.kernel,
+                    kernel_size=4,
                     strides=2,
                     use_bias=not USE_BATNORM
                     )(X)

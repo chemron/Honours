@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import glob
 
 
-main_dir = "/home/adonea/Mona0028/adonea/cameron/Honours/"
+main_dir = "/home/csmi0005/Mona0028/adonea/cameron/Honours/"
 # main_dir = "../"
 data_dir = main_dir + "data_collection/DATA/"
 stereo_fits_dir = data_dir + "fits_STEREO/"

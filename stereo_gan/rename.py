@@ -7,7 +7,7 @@ def remove_prefix(text, prefix):
     return text
 
 
-dir = "/home/adonea/Mona0028/adonea/cameron/Honours/DATpythnA/"
+dir = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATpythnA/"
 prefix = "TRAIN"
 
 for filename in os.listdir(dir):

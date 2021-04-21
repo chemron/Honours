@@ -5,7 +5,7 @@ matplotlib.use('agg')
 import matplotlib.pyplot as plt
 
 
-path = "/home/adonea/Mona0028/adonea/cameron/Honours/DATA"
+path = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATA"
 types = ["MAG", "STE", "smap"]
 types_joined = ["MAG", "STE", "smap"]
 gan_outputs = ["p100_batch_1/", "P100_default/", "P100_low_tol/"]
