@@ -112,6 +112,7 @@ os.makedirs(RESULT_PATH1) if not os.path.exists(RESULT_PATH1) else None
 ITER = START_ITER
 
 while ITER <= MAX_ITER:
+    print("hello?")
     SITER = '%07d' % ITER  # string representing the itteration
 
     # file path for the model of current itteration

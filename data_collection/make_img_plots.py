@@ -6,16 +6,16 @@ import matplotlib.pyplot as plt
 
 
 path = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATA"
-types = ["MAG", "STE", "smap"]
-types_joined = ["MAG", "STE", "smap"]
-gan_outputs = ["p100_batch_1/", "P100_default/", "P100_low_tol/"]
-plot_all = True
+types = ["STE", "smap", "MAG"]
+types_joined = [] # ["MAG", "STE", "smap"]
+gan_outputs = ["P100_32_kernal/"]
+plot_all = False
 size = 1024
 
 
 
 def make_plot(plot_name, n, arrs_individual=[], arrs_joined=None):
-    n_rows = (n+1)//4
+    n_rows = (n-1)//4 + 1
     n_cols = 4
 
     # if we want a blended image
@@ -46,12 +46,14 @@ def make_plot(plot_name, n, arrs_individual=[], arrs_joined=None):
 def load_numpy(file_strs):
     for file_str in file_strs:
         files = glob.glob(file_str)
+        if not plot_all:
+            files = files[-1:]
         if len(files) >= 1:
             for filename in files:
                 arr = np.load(filename)
                 yield arr, filename
         else:
-            print(f"{len(file)} files matching: {file_str}")
+            print(f"{len(files)} files matching: {file_str}")
 
 
 for folder in ["TEST"]: #  "TRAIN"]:
@@ -62,12 +64,9 @@ for folder in ["TEST"]: #  "TRAIN"]:
         if folder == "TEST":
             gan_files = list([f"{sub_folder}/{o}*.npy"
                               for o in gan_outputs])
-            if plot_all:
-                individual_file_strs += gan_files
-            else:
-                gan_files.sort()
-                individual_file_strs += gan_files[-1]
             
+            individual_file_strs += gan_files
+
         # number of individual plots
         data = list(load_numpy(individual_file_strs))
         n = len(data)

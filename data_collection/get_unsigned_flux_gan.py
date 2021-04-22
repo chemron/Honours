@@ -2,66 +2,64 @@ from pixel_area import get_pixel_areas
 from normalise_HMI_p import clip_max
 import numpy as np
 from astropy.io import fits
+from datetime import datetime as dt
 import os
-import glob
 
-folders = ["../DATA/TRAIN/"]  # , "../DATA/TEST/"]
+main_dir = "/home/csmi0005/Mona0028/adonea/cameron/Honours/"
+folder = f"{main_dir}kim_gan/RESULTS/P100_4/STEREO_to_MAG/ITER0300000/"
 save_dir = "DATA/unsigned_flux/"
 os.makedirs(save_dir) if not os.path.exists(save_dir) else None
 save_file = f"{save_dir}unsigned_flux_gan"
-modes = ["batch", "default", "low_tol", "ste"]
-mode_strs = ["p100_batch_1/100000*", "P100_default/200000*", "P100_low_tol/200000*", "MAG_*" ]
+mode = "ste_full"
+mode_str = "MAG_*"
+shape = (1024, 1024)
 
-# for mode in modes:
-#     save_str = f"{save_file}_{mode}.txt"
-#     if os.path.exists(save_str):
-#         print(f"File {save_str} already exists. Removing now.")
-#         os.remove(save_str)
+header_ref = f"{main_dir}DATA/TEST/2011.11.01_00:00:00/ste_header"
 
-for folder in folders:
-    for date in np.sort(os.listdir(folder)):
-        hdul = fits.open(f"{folder}{date}/ste_header", memmap=False, ext=0)
-        hdul.verify("fix")
-        header = hdul[0].header
-        for i in range(len(modes)):
-            mode = modes[i]
-            mode_str = mode_strs[i]
-            data_string = f"{folder}{date}/{mode_str}"
-            print(data_string)
-            data_file = glob.glob(data_string)[0]
-            data = np.load(data_file)
+def get_date_str(filename):
+    date_str_in = "MAG_%Y.%m.%d_%H:%M:%S.npy"
+    date_str_out = "%Y-%m-%dT%H:%M:%S.000"
+    date = dt.strptime(file, date_str_in)
+    date_str = date.strftime(date_str_out)
 
-            # undo normalisation
-            data = np.abs(data)**2
-            data *= clip_max
+    return date_str
 
-            shape = data.shape
 
-            # radius of sun in arcsec
-            r_sun_arc = header["RSUN"]
-            # radius of sun in pixels
-            r_sun_pix = [0.5 * shape[0], 0.5 * shape[1]]
-            
-            cdelt = [r_sun_arc/r_sun_pix[0], r_sun_arc/r_sun_pix[1]]
-            
-            # reference pixel
-            c_ref = [0.5 * shape[0], 0.5 * shape[1]]
+hdul = fits.open(header_ref, memmap=False, ext=0)
+hdul.verify("fix")
+header = hdul[0].header
 
-            area = get_pixel_areas(header, shape, cdelt, c_ref)
-            flux = area * np.absolute(data)
+# radius of sun in arcsec
+r_sun_arc = header["RSUN"]
+# radius of sun in pixels
+r_sun_pix = [0.5 * shape[0], 0.5 * shape[1]]
+# width of pixel in arcsec
+cdelt = [r_sun_arc/r_sun_pix[0], r_sun_arc/r_sun_pix[1]]
+# reference pixel
+c_ref = [0.5 * shape[0], 0.5 * shape[1]]
 
-            # remove nans
-            flux = np.nan_to_num(flux)
+area = get_pixel_areas(header, shape, cdelt, c_ref)
 
-            total_flux = np.sum(flux)
 
-            date_str = header["DATE-OBS"]
+files = np.sort(os.listdir(folder))
+for i in range(len(files)):
+    file = files[i]
+    print(i, file)
+    data = np.load(folder + file)
 
-            f = open(f"{save_file}_{mode}.txt", "a+")
-            f.write(f"{date_str}\t{total_flux}\n")
-            f.close()
-        # except Exception as e:
-        #     # This is obviously bad practice, but since I'm running this overnight I
-        #     # don't want it to halt for some error I didn't anticipate
-        #     print(f"Got error for date: {date}")
-        #     print(e)
+    # undo normalisation
+    data = np.abs(data)**2
+    data *= clip_max
+
+    flux = area * np.absolute(data)
+
+    # remove nans
+    flux = np.nan_to_num(flux)
+
+    total_flux = np.sum(flux)
+
+    date_str = get_date_str(file)
+
+    f = open(f"{save_file}_{mode}.txt", "a+")
+    f.write(f"{date_str}\t{total_flux}\n")
+    f.close()
