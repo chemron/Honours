@@ -19,7 +19,7 @@ header_ref = f"{main_dir}DATA/TEST/2011.11.01_00:00:00/ste_header"
 def get_date_str(filename):
     date_str_in = "MAG_%Y.%m.%d_%H:%M:%S.npy"
     date_str_out = "%Y-%m-%dT%H:%M:%S.000"
-    date = dt.strptime(file, date_str_in)
+    date = dt.strptime(filename, date_str_in)
     date_str = date.strftime(date_str_out)
 
     return date_str

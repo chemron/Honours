@@ -12,9 +12,10 @@ folder = "DATA/unsigned_flux/"
 modes_line = ["hmi", "gan_ste_full"]
 n_l = len(modes_line)
 # plot with scatter plot
-modes_scatter = ["gan_batch", "gan_default", "gan_low_tol"]
+modes_scatter = ["gan_16_kernal_size_test", "gan_16_kernal_size_train", "gan_batch", "gan_low_tol"]
 n_s = len(modes_scatter)
 flares = False
+average = True
 
 
 def moving_average(a, n):
@@ -32,15 +33,16 @@ def get_data(mode):
         # remove milliseconds
         date = date.split(".")[0]
         date = datetime.strptime(date, "%Y-%m-%dT%H:%M:%S")
-        flux = float(flux)**(1/2)
+        flux = float(flux)
         if flux >= 1e20:
             continue
         dates.append(date)
         fluxes.append(flux)
     
-    n = 56
-    fluxes = moving_average(fluxes, n)
-    dates = dates[n//2:-n//2 + 1]
+    if average:    
+        n = 55
+        fluxes = moving_average(fluxes, n)
+        dates = dates[n//2:-n//2 + 1]
     data.close()
     return dates, fluxes
 
@@ -64,7 +66,7 @@ def plot_flares(ax):
 
 
 # set up figure
-plt.figure(1, figsize=(25, 10))
+plt.figure(1, figsize=(15, 8))
 ax = plt.subplot(1, 1, 1)
 # rule = rrulewrapper(MONTHLY, interval=6)
 # loc = RRuleLocator(rule)
@@ -72,7 +74,7 @@ ax = plt.subplot(1, 1, 1)
 formatter = DateFormatter('%d/%m/%y')
 ax.xaxis.set_major_formatter(formatter)
 ax.xaxis.set_tick_params(rotation=30, labelsize=10)
-ax.set_xlabel("Date")
+ax.set_xlabel("Date (day/month/year)")
 ax.set_ylabel("Flux")
 # ax.set_ylim(1e18, 1e21)
 # colours
@@ -97,7 +99,10 @@ for mode in modes_scatter:
     plt.scatter(*data, label=f"Flux according to {mode}", c=cmap[c], s=4)
     c += 1
 
-
-
+title_str = "Total Unsigned Magnetic Flux vs Time"
+if average:
+    title_str += " with ~27 day rolling average"
+plt.title(title_str)
+plt.tight_layout
 plt.legend()
 plt.savefig("Flux_vs_time.png")

@@ -68,7 +68,8 @@ OP1 = f'{INPUT.upper()}_to_{OUTPUT}'
 
 TRIAL_NAME = args.model_name
 
-TEST_PATH = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATA/TEST/"
+# TEST_PATH = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATA/TEST/"
+TEST_PATH = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATA/TRAIN/"
 
 ISIZE = 1024  # input size
 NC_IN = 1  # number of channels in the output
@@ -150,24 +151,21 @@ while ITER <= MAX_ITER:
         os.makedirs(folder) if not os.path.exists(folder) else None
         DATE = GET_DATE_STR(image)
 
-        if f'{ITER}_{OUTPUT}_{DATE}.npy' not in os.listdir(folder):
-            SAVE_NAME = f"{folder}{ITER}_{OUTPUT}_{DATE}"
+        SAVE_NAME = f"{folder}{ITER}_{OUTPUT}_{DATE}"
 
-            # input image
-            IMG = np.load(image) * 2 - 1
+        # input image
+        IMG = np.load(image) * 2 - 1
 
-            # reshapes IMG tensor to (BATCH_SIZE, ISIZE, ISIZE, NC_IN)
-            IMG.shape = (BATCH_SIZE, ISIZE, ISIZE, NC_IN)
-            # output image (generated HMI)
-            FAKE = NET_G_GEN(IMG)
-            FAKE = FAKE[0]
-            if NC_IN == 1:
-                FAKE.shape = (ISIZE, ISIZE)
-            else:
-                FAKE.shape = (ISIZE, ISIZE, NC_OUT)
-            np.save(SAVE_NAME, FAKE)
+        # reshapes IMG tensor to (BATCH_SIZE, ISIZE, ISIZE, NC_IN)
+        IMG.shape = (BATCH_SIZE, ISIZE, ISIZE, NC_IN)
+        # output image (generated HMI)
+        FAKE = NET_G_GEN(IMG)
+        FAKE = FAKE[0]
+        if NC_IN == 1:
+            FAKE.shape = (ISIZE, ISIZE)
         else:
-            print("already downloaded")
+            FAKE.shape = (ISIZE, ISIZE, NC_OUT)
+        np.save(SAVE_NAME, FAKE)
 
     del MODEL
     K.clear_session()

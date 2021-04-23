@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 path = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATA"
 types = ["STE", "smap", "MAG"]
 types_joined = [] # ["MAG", "STE", "smap"]
-gan_outputs = ["P100_32_kernal/"]
+gan_outputs = ["P100_16_kernal/"]
 plot_all = False
 size = 1024
 
@@ -46,9 +46,10 @@ def make_plot(plot_name, n, arrs_individual=[], arrs_joined=None):
 def load_numpy(file_strs):
     for file_str in file_strs:
         files = glob.glob(file_str)
-        if not plot_all:
+        n = len(files)
+        if not plot_all and (n > 1):
             files = files[-1:]
-        if len(files) >= 1:
+        if n >= 1:
             for filename in files:
                 arr = np.load(filename)
                 yield arr, filename

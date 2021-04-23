@@ -45,8 +45,6 @@ args = parser.parse_args()
 # set parameters
 SLEEP_TIME = 1000
 ITER = args.iter
-if START_ITER == 0:
-    START_ITER = DISPLAY_ITER
 MODE = 'S_MAP_to_MAG'
 INPUT = "smap"
 OUTPUT = 'MAG'
@@ -122,6 +120,8 @@ for image in DATA_LIST:
         IMG = np.load(image) * 2 - 1
 
         # reshapes IMG tensor to (BATCH_SIZE, ISIZE, ISIZE, NC_IN)
+        print(IMG.shape)
+        print(np.min(IMG), np.max(IMG))
         IMG.shape = (BATCH_SIZE, ISIZE, ISIZE, NC_IN)
         # output image (generated HMI)
         FAKE = NET_G_GEN(IMG)
@@ -136,5 +136,3 @@ for image in DATA_LIST:
 
 del MODEL
 K.clear_session()
-
-ITER += DISPLAY_ITER
