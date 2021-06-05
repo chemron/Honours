@@ -11,8 +11,8 @@ main_dir = "/home/csmi0005/Mona0028/adonea/cameron/Honours/"
 save_dir = f"DATA/unsigned_flux/"
 os.makedirs(save_dir) if not os.path.exists(save_dir) else None
 save_file = f"{save_dir}unsigned_flux_gan"
-modes = ["16_kernal_size_train"]
-mode_strs = ["P100_16_kernal/*" ]
+modes = ["bigger_batch_train"]
+mode_strs = ["p100_batch_1/*" ]
 shape = (1024, 1024)
 header_ref = f"{main_dir}DATA/TEST/2011.11.01_00:00:00/ste_header"
 
