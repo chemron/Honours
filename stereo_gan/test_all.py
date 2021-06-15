@@ -68,7 +68,11 @@ OP1 = f'{INPUT.upper()}_to_{OUTPUT}'
 
 TRIAL_NAME = args.model_name
 
-TEST_PATH = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATA/TEST/"
+INPUT_FOLDER = "/home/csmi0005/Mona0028/adonea/cameron/Honours/data_collection/DATA/np_phase_map/"
+OUTPUT_FOLDER = f"/home/csmi0005/Mona0028/adonea/cameron/Honours/data_collection/DATA/{TRIAL_NAME}_predictions/"
+
+os.makedirs(OUTPUT_FOLDER) if not os.path.exists(OUTPUT_FOLDER) else None
+
 # TEST_PATH = "/home/csmi0005/Mona0028/adonea/cameron/Honours/DATA/TRAIN/"
 
 ISIZE = 1024  # input size
@@ -89,31 +93,18 @@ def GET_DATE_STR(file):
     # get name and remove extension
     filename = file.split("/")[-1][:-4]  # filename is at end of file path
     date_str = filename.split("_")  # date string is after first "_"
-    date_str = f"{date_str[1]}_{date_str[2]}"
+    date_str = f"{date_str[-2]}_{date_str[-1]}"
     return date_str
 
 
-DATA_LIST = glob.glob(TEST_PATH + "*")
-IMAGE_LIST1 = list(GRAB_DATA(DATA_LIST))
 
-
-# finds and sorts the filenames for INPUT1, INPUT2 and OUTPUT respectively
-# IMAGE_LIST1 = sorted(glob.glob(TEST_PATH))
-
-RESULT_PATH_MAIN = './RESULTS/' + TRIAL_NAME + '/'
-# os.mkdir(RESULT_PATH_MAIN) if not os.path.exists(RESULT_PATH_MAIN) else None
-
-# file path for the results of INPUT1 to OUTPUT (generating HMI from nearside)
-RESULT_PATH1 = RESULT_PATH_MAIN + OP1 + '/'
-os.makedirs(RESULT_PATH1) if not os.path.exists(RESULT_PATH1) else None
-
+IMAGE_LIST1 = glob.glob(INPUT_FOLDER + "*")
 
 # during training, the model was saved every DISPLAY_ITER steps
 # as such, test every DISPLAY_ITER.
 ITER = START_ITER
 
 while ITER <= MAX_ITER:
-    print("hello?")
     SITER = '%07d' % ITER  # string representing the itteration
 
     # file path for the model of current itteration
@@ -146,12 +137,10 @@ while ITER <= MAX_ITER:
         return np.concatenate(output, axis=0)
 
     for i in range(len(IMAGE_LIST1)):
-        folder, image = IMAGE_LIST1[i]
-        folder += f'/{TRIAL_NAME}/'
-        os.makedirs(folder) if not os.path.exists(folder) else None
+        image = IMAGE_LIST1[i]
         DATE = GET_DATE_STR(image)
 
-        SAVE_NAME = f"{folder}{ITER}_{OUTPUT}_{DATE}_fixed"
+        SAVE_NAME = f"{OUTPUT_FOLDER}{OUTPUT}_{DATE}"
 
         # input image
         IMG = np.load(image) # * 2 - 1
