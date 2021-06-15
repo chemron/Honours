@@ -10,9 +10,9 @@ folders = ["../DATA/TRAIN/"]  # , "../DATA/TEST/"]
 main_dir = "/home/csmi0005/Mona0028/adonea/cameron/Honours/"
 save_dir = f"DATA/unsigned_flux/"
 os.makedirs(save_dir) if not os.path.exists(save_dir) else None
-save_file = f"{save_dir}unsigned_flux_gan"
+save_file = f"{save_dir}unsigned_flux_gan_fixed"
 modes = ["fixed_batch_train"]
-mode_strs = ["p100_batch_1/*fixed" ]
+mode_strs = ["p100_batch_1/*fixed*" ]
 shape = (1024, 1024)
 header_ref = f"{main_dir}DATA/TEST/2011.11.01_00:00:00/ste_header"
 
@@ -21,7 +21,7 @@ def get_date_str(filename):
     # remove directory information and .npy suffix
     f = filename.split("/")[-1][:-4]
     # date and time are on the end of string
-    day, time = f.split("_")[-2:]
+    day, time = f.split("_")[-3:-1]
     date_str = day + time
     # date string formats
     date_str_in = "%Y.%m.%d%H:%M:%S"
@@ -72,7 +72,6 @@ for folder in folders:
             total_flux = np.sum(flux)
 
             date_str = get_date_str(data_file)
-
             f = open(f"{save_file}_{mode}.txt", "a+")
             f.write(f"{date_str}\t{total_flux}\n")
             f.close()

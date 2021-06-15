@@ -10,8 +10,9 @@ import matplotlib.pyplot as plt
 import glob
 
 main_dir = "/home/csmi0005/Mona0028/adonea/cameron/Honours/"
-data_dir = "/home/csmi0005/Mona0028/adonea/cameron/Honours/data_collection/DATA/"
+data_dir = main_dir + "data_collection/DATA/"
 smap_fits_dir = data_dir + "fits_phase_map/"
+output_dir = data_dir + "np_phase_projected/"
 header_ref = f"{main_dir}DATA/TEST/2011.11.01_00:00:00/ste_header"
 
 
@@ -97,6 +98,8 @@ stereo_header = hdul[0].header
 smap_files = np.sort(os.listdir(smap_fits_dir))
 
 for smap_file in smap_files:
+    smap_date = get_date(smap_file, "seismic_fits")
+    smap_date_str = smap_date.strftime("%Y.%m.%d_%H:%M:%S")
     # get sesmic map data and header
     hdul = fits.open(smap_fits_dir + smap_file, memmap=False, ext=0)
     hdul.verify("fix")
@@ -121,24 +124,4 @@ for smap_file in smap_files:
     # transform seismic map to match stereo data:
     new_smap = warp(smap_data, transformation,
                     output_shape=(1024, 1024), map_args=map_args)
-    np.save(f"{group_dir}smap_{smap_date_str}.npy", new_smap)
-
-    # copy over stereo magnetograms
-    copyfile(stereo_mag_dir + stereo_mag_name, group_dir + stereo_mag_name)
-    stereo_mag_data = np.load(stereo_mag_dir + stereo_mag_name)
-
-    # make plot
-    plt.figure(1, figsize=(20, 5))
-    plt.subplot(141)
-    plt.imshow(stereo_data, origin="lower")
-    plt.subplot(142)
-    plt.imshow(new_smap, origin="lower")
-    plt.subplot(143)
-    plt.imshow(stereo_mag_data, origin="lower")
-    plt.subplot(144)
-    plt.imshow(stereo_data, origin="lower", alpha=0.55)
-    plt.imshow(new_smap, origin="lower", alpha=0.55)
-    plt.imshow(stereo_mag_data, origin="lower", alpha=0.55)
-    plt.tight_layout
-    plt.savefig(f"{group_dir}comparison.png")
-    plt.close(1)
+    np.save(f"{output_dir}smap_{smap_date_str}.npy", new_smap)
