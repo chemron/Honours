@@ -13,7 +13,7 @@ modes_line = ["hmi", "gan_ste_full"]
 names_line = ["SDO", "STEREO GAN"]
 n_l = len(modes_line)
 # plot with scatter plot
-modes_scatter = ["gan_batch"]
+modes_scatter = ["gan_batch_fixed_fixed"]
 name_scatter = ["Seismic GAN"]
 n_s = len(modes_scatter)
 flares = True

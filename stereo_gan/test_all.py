@@ -68,7 +68,7 @@ OP1 = f'{INPUT.upper()}_to_{OUTPUT}'
 
 TRIAL_NAME = args.model_name
 
-INPUT_FOLDER = "/home/csmi0005/Mona0028/adonea/cameron/Honours/data_collection/DATA/np_phase_map/"
+INPUT_FOLDER = "/home/csmi0005/Mona0028/adonea/cameron/Honours/data_collection/DATA/np_phase_projected/"
 OUTPUT_FOLDER = f"/home/csmi0005/Mona0028/adonea/cameron/Honours/data_collection/DATA/{TRIAL_NAME}_predictions/"
 
 os.makedirs(OUTPUT_FOLDER) if not os.path.exists(OUTPUT_FOLDER) else None
