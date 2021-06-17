@@ -1,6 +1,6 @@
 import sys
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 import matplotlib.pyplot as plt
 from matplotlib.dates import (MONTHLY, DAILY, DateFormatter,
                               rrulewrapper, RRuleLocator)
@@ -10,14 +10,18 @@ plt.switch_backend('agg')
 folder = "DATA/unsigned_flux/"
 # plot with line plot
 modes_line = ["hmi", "gan_ste_full"]
-names_line = ["SDO", "STEREO GAN"]
+names_line = ["SDO", "UV-GAN"]
 n_l = len(modes_line)
 # plot with scatter plot
-modes_scatter = ["gan_batch_fixed_fixed"]
-name_scatter = ["Seismic GAN"]
+modes_scatter = []  #["gan_batch_fixed"] # ["gan_batch_fixed"]
+name_scatter = []  #"Seismic GAN"]
 n_s = len(modes_scatter)
-flares = True
+flares = False
 average = False
+
+outlier_date_1 = datetime(2018, 11, 14)
+outlier_date_2_start = datetime(2018, 3, 28, 12)
+outlier_date_2_end = datetime(2018, 4, 5)
 
 
 def moving_average(a, n):
@@ -38,11 +42,15 @@ def get_data(mode):
         flux = float(flux)
         if flux >= 1e20:
             continue
+        if abs(date - outlier_date_1) < timedelta(hours=6):
+            continue
+        if (date >= outlier_date_2_start) and (date <= outlier_date_2_end):
+            continue
         dates.append(date)
         fluxes.append(flux)
     
     if average:    
-        n = 55
+        n = 27
         fluxes = moving_average(fluxes, n)
         dates = dates[n//2:-n//2 + 1]
     data.close()
